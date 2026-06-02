@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { supabase } from './supabase';
 import { MTSFormData } from '../hooks/useMTSOCR';
 
@@ -81,11 +81,11 @@ const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
 };
 
 /**
- * Gets trips directly from the local AsyncStorage.
+ * Gets trips directly from the local SecureStore.
  */
 export const getLocalTrips = async (): Promise<SavedTrip[]> => {
   try {
-    const raw = await AsyncStorage.getItem(LOCAL_STORAGE_KEY);
+    const raw = await SecureStore.getItemAsync(LOCAL_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
     console.error('Error reading local trips cache:', err);
@@ -94,11 +94,11 @@ export const getLocalTrips = async (): Promise<SavedTrip[]> => {
 };
 
 /**
- * Overwrites local AsyncStorage trip list.
+ * Overwrites local SecureStore trip list.
  */
 export const saveLocalTrips = async (trips: SavedTrip[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(trips));
+    await SecureStore.setItemAsync(LOCAL_STORAGE_KEY, JSON.stringify(trips));
   } catch (err) {
     console.error('Error saving local trips cache:', err);
   }
@@ -188,11 +188,11 @@ export const syncPendingTrips = async (): Promise<void> => {
 };
 
 /**
- * Clears local AsyncStorage trips cache (useful for developer reset).
+ * Clears local SecureStore trips cache (useful for developer reset).
  */
 export const clearLocalTrips = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(LOCAL_STORAGE_KEY);
+    await SecureStore.deleteItemAsync(LOCAL_STORAGE_KEY);
   } catch (err) {
     console.error('Error clearing local trips:', err);
   }

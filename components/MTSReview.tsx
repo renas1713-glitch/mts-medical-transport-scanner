@@ -160,8 +160,16 @@ export const MTSReview: React.FC<MTSReviewProps> = ({
 
   // Save trip to databaseManager (local cache + Supabase sync)
   const handleSave = async () => {
-    if (!abholort.trim() || !zielort.trim()) {
+    const cleanAbholort = abholort.trim();
+    const cleanZielort = zielort.trim();
+
+    if (!cleanAbholort || !cleanZielort) {
       Alert.alert('Eingabefehler', 'Abholort und Zielort dürfen nicht leer sein.');
+      return;
+    }
+
+    if (cleanAbholort.length > 250 || cleanZielort.length > 250) {
+      Alert.alert('Eingabefehler', 'Die Adresse ist zu lang. Bitte kürzen.');
       return;
     }
 
@@ -172,8 +180,8 @@ export const MTSReview: React.FC<MTSReviewProps> = ({
       const tripToSave: SavedTrip = {
         ...scannedData,
         id: tripId,
-        abholort,
-        zielort,
+        abholort: cleanAbholort,
+        zielort: cleanZielort,
         fahrtart,
         hinfahrtBoxChecked,
         rueckfahrtBoxChecked,

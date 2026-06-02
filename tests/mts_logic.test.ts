@@ -1,25 +1,32 @@
-// Mock react-native-async-storage and supabase-js BEFORE importing databaseManager
+// Mock react-native-async-storage, expo-secure-store, and supabase-js BEFORE importing databaseManager
 const localStore: { [key: string]: string } = {};
 
-const mockAsyncStorage = {
-  getItem: async (key: string) => {
+const mockSecureStore = {
+  getItemAsync: async (key: string) => {
     return localStore[key] || null;
   },
-  setItem: async (key: string, value: string) => {
+  setItemAsync: async (key: string, value: string) => {
     localStore[key] = value;
   },
-  removeItem: async (key: string) => {
+  deleteItemAsync: async (key: string) => {
     delete localStore[key];
   },
-  clear: async () => {
-    Object.keys(localStore).forEach((key) => delete localStore[key]);
-  },
+};
+
+// Also keep AsyncStorage mock for supabase
+const mockAsyncStorage = {
+  getItem: async (key: string) => localStore[key] || null,
+  setItem: async (key: string, value: string) => { localStore[key] = value; },
+  removeItem: async (key: string) => { delete localStore[key]; },
 };
 
 // Intercept Module loading
 const Module = require('module');
 const originalRequire = Module.prototype.require;
 Module.prototype.require = function (this: any, id: string) {
+  if (id === 'expo-secure-store') {
+    return mockSecureStore;
+  }
   if (id === '@react-native-async-storage/async-storage') {
     return mockAsyncStorage;
   }
