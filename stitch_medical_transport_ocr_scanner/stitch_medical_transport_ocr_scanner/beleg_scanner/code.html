@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="light" lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Scanner - Krankentransport</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#f8f9fa",
+                      "on-tertiary-fixed-variant": "#793100",
+                      "on-secondary-container": "#007327",
+                      "inverse-surface": "#2e3132",
+                      "inverse-primary": "#a9c7ff",
+                      "secondary": "#006e25",
+                      "surface-variant": "#e1e3e4",
+                      "on-primary-fixed-variant": "#00468c",
+                      "on-error-container": "#93000a",
+                      "outline": "#727783",
+                      "tertiary-container": "#9f4300",
+                      "on-tertiary-container": "#ffcfb9",
+                      "surface-container-low": "#f3f4f5",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#d9dadb",
+                      "on-surface": "#191c1d",
+                      "on-surface-variant": "#424752",
+                      "secondary-fixed-dim": "#66df75",
+                      "primary-fixed-dim": "#a9c7ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed": "#83fc8e",
+                      "surface-container-high": "#e7e8e9",
+                      "outline-variant": "#c2c6d4",
+                      "tertiary-fixed": "#ffdbcb",
+                      "primary-fixed": "#d6e3ff",
+                      "on-background": "#191c1d",
+                      "error-container": "#ffdad6",
+                      "surface-bright": "#f8f9fa",
+                      "on-secondary-fixed": "#002106",
+                      "primary": "#00478d",
+                      "on-primary-fixed": "#001b3d",
+                      "on-tertiary-fixed": "#341100",
+                      "surface-container": "#edeeef",
+                      "surface-tint": "#005db6",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-primary-container": "#c8daff",
+                      "error": "#ba1a1a",
+                      "primary-container": "#005eb8",
+                      "secondary-container": "#80f98b",
+                      "on-primary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary-fixed-variant": "#00531a",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "background": "#f8f9fa",
+                      "tertiary": "#793100"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "lg": "24px",
+                      "sm": "12px",
+                      "touch-target-min": "48px",
+                      "md": "16px",
+                      "base": "8px",
+                      "xl": "32px",
+                      "gutter-mobile": "12px",
+                      "margin-mobile": "16px",
+                      "safe-top": "env(safe-area-inset-top, 24px)",
+                      "safe-bottom": "env(safe-area-inset-bottom, 24px)"
+              },
+              "fontFamily": {
+                      "title-lg": ["Inter", "sans-serif"],
+                      "headline-sm": ["Inter", "sans-serif"],
+                      "label-lg": ["Inter", "sans-serif"],
+                      "display-lg": ["Inter", "sans-serif"],
+                      "headline-md": ["Inter", "sans-serif"],
+                      "label-md": ["Inter", "sans-serif"],
+                      "display-lg-mobile": ["Inter", "sans-serif"],
+                      "body-lg": ["Inter", "sans-serif"],
+                      "body-md": ["Inter", "sans-serif"]
+              },
+              "fontSize": {
+                      "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "display-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Scanner Overlay Trick using large shadow */
+        .scanner-window {
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.65);
+        }
+
+        /* Scanning Line Animation */
+        @keyframes scan {
+            0% { transform: translateY(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+        .animate-scan {
+            animation: scan 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        /* Pulse animation for focus areas */
+        @keyframes pulse-border {
+            0% { border-color: rgba(128, 249, 139, 0.4); } /* secondary-container */
+            50% { border-color: rgba(128, 249, 139, 1); }
+            100% { border-color: rgba(128, 249, 139, 0.4); }
+        }
+        .focus-guide {
+            animation: pulse-border 2s infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-black text-surface overflow-hidden fixed inset-0 font-body-md select-none">
+<!-- Camera Viewport Simulation (Background Image) -->
+<div class="absolute inset-0 w-full h-full z-0">
+<img alt="Camera view" class="w-full h-full object-cover opacity-80 mix-blend-luminosity" data-alt="A close-up view through a smartphone camera lens, simulating a document scanning interface. A German medical transport prescription form (Muster 4) rests on a sterile, well-lit clinic desk. The lighting is bright and professional, utilizing the high-contrast light mode aesthetic of the application to ensure text is legible. The image feels active, as if the user is in the middle of a high-pressure clinical or transport task, focusing intensely on capturing the document perfectly." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsnrfVCtmuOCuXFC33sNA1-1306DNypNkYb9gzIDUifZm-UctLD7QPLROvpVfKSMOsZf89iFXNcxH6RAj9IJhkN6xCOttWjxRi9yOHILkccAp29T7uHQ9n4jnoldOB36cSeK6Ad16GFveCuZP8diH4mssOzpniu21ve62Y4JnlV-PFHw3uPa-ja3n_D26R-TA3pgbabVT1Kq1hJJrrw3sT3_4peaL34yWx15gLnqsKYpoIEYYckEUXta0x1xpco_ypYuDFv6ZD_4o"/>
+</div>
+<!-- UI Overlay Layer -->
+<div class="absolute inset-0 z-10 flex flex-col items-center justify-between pointer-events-none">
+<!-- Top Help Text Area -->
+<div class="w-full pt-safe-top mt-6 flex justify-center px-4">
+<div class="bg-surface-container-highest/95 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-2 shadow-lg border border-outline-variant/30">
+<span class="material-symbols-outlined text-primary text-xl">document_scanner</span>
+<p class="font-label-lg text-on-surface-variant whitespace-nowrap">Bitte Muster 4 Formular im Rahmen ausrichten</p>
+</div>
+</div>
+<!-- Scanner Framing Area -->
+<div class="relative w-[85vw] max-w-sm h-[530px] max-h-[800px] rounded-xl border-2 border-secondary-container scanner-window overflow-hidden flex flex-col justify-between p-4">
+<!-- Scanning Laser Line -->
+<div class="absolute left-0 right-0 h-1 bg-secondary-container shadow-[0_0_8px_2px_rgba(128,249,139,0.5)] animate-scan z-20"></div>
+<!-- Corner Markers for visual aesthetic -->
+<div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-secondary-container rounded-tl-xl"></div>
+<div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-secondary-container rounded-tr-xl"></div>
+<div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-secondary-container rounded-bl-xl"></div>
+<div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-secondary-container rounded-br-xl"></div>
+<!-- Visual Focus Guides -->
+<!-- 1. Checkboxes (Top Right) -->
+<div class="absolute top-8 right-6 w-1/3 h-16 border-2 border-dashed border-secondary-container/50 focus-guide rounded-lg bg-secondary-container/10 flex items-center justify-center backdrop-blur-[1px]">
+<span class="font-label-md text-secondary-container text-center leading-tight drop-shadow-md">
+                    Hinfahrt /<br/>Rückfahrt
+                </span>
+</div>
+<!-- 2. Abschnitt 2 Goal (Middle Left) -->
+<div class="absolute top-1/3 left-6 w-2/3 h-32 border-2 border-dashed border-secondary-container/50 focus-guide rounded-lg bg-secondary-container/10 flex items-center justify-center backdrop-blur-[1px]">
+<span class="font-label-md text-secondary-container text-center leading-tight drop-shadow-md bg-black/40 px-3 py-1 rounded-full">
+                    Abschnitt 2 erfassen
+                </span>
+</div>
+<!-- Overlay subtle grid -->
+<div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+</div>
+<!-- Spacer to push controls to bottom -->
+<div class="flex-grow"></div>
+</div>
+<!-- Bottom Control Bar (Interactive Layer) -->
+<div class="absolute bottom-0 w-full pb-safe-bottom bg-gradient-to-t from-black/80 via-black/50 to-transparent z-20">
+<div class="flex items-center justify-around px-8 pb-12 pt-8">
+<!-- Flash Toggle Button -->
+<button aria-label="Blitz umschalten" class="w-14 h-14 rounded-full bg-surface-container-highest/30 backdrop-blur-md flex items-center justify-center text-surface hover:bg-surface-container-highest/50 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-2xl">flash_off</span>
+</button>
+<!-- Main Shutter Button -->
+<div class="relative w-24 h-24 flex items-center justify-center">
+<!-- Outer Ring -->
+<div class="absolute inset-0 rounded-full border-[6px] border-surface/80"></div>
+<!-- Inner Button -->
+<button aria-label="Foto aufnehmen" class="w-[72px] h-[72px] rounded-full bg-surface hover:bg-surface-variant active:scale-90 transition-transform duration-150 flex items-center justify-center shadow-lg group">
+<!-- Subtle brand color tint on interaction -->
+<div class="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</button>
+</div>
+<!-- Cancel Button -->
+<button aria-label="Abbrechen" class="w-14 h-14 rounded-full bg-surface-container-highest/30 backdrop-blur-md flex items-center justify-center text-surface hover:bg-surface-container-highest/50 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-3xl">close</span>
+</button>
+</div>
+</div>
+<!-- Inline script for micro-interactions (Flash toggle simulation) -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const flashBtn = document.querySelector('button[aria-label="Blitz umschalten"]');
+            const flashIcon = flashBtn.querySelector('span');
+            let flashOn = false;
+
+            flashBtn.addEventListener('click', () => {
+                flashOn = !flashOn;
+                if (flashOn) {
+                    flashIcon.textContent = 'flash_on';
+                    flashIcon.classList.add('text-secondary-container');
+                    flashIcon.classList.remove('text-surface');
+                } else {
+                    flashIcon.textContent = 'flash_off';
+                    flashIcon.classList.remove('text-secondary-container');
+                    flashIcon.classList.add('text-surface');
+                }
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Medical Transport Scanner",
+    "slug": "medical-transport-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#121416"
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Medical Transport Scanner to access your camera to scan forms."
+        }
+      ]
+    ]
+  }
+}

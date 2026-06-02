@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>MedDrive - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#f8f9fa",
+                      "on-tertiary-fixed-variant": "#793100",
+                      "on-secondary-container": "#007327",
+                      "inverse-surface": "#2e3132",
+                      "inverse-primary": "#a9c7ff",
+                      "secondary": "#006e25",
+                      "surface-variant": "#e1e3e4",
+                      "on-primary-fixed-variant": "#00468c",
+                      "on-error-container": "#93000a",
+                      "outline": "#727783",
+                      "tertiary-container": "#9f4300",
+                      "on-tertiary-container": "#ffcfb9",
+                      "surface-container-low": "#f3f4f5",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#d9dadb",
+                      "on-surface": "#191c1d",
+                      "on-surface-variant": "#424752",
+                      "secondary-fixed-dim": "#66df75",
+                      "primary-fixed-dim": "#a9c7ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed": "#83fc8e",
+                      "surface-container-high": "#e7e8e9",
+                      "outline-variant": "#c2c6d4",
+                      "tertiary-fixed": "#ffdbcb",
+                      "primary-fixed": "#d6e3ff",
+                      "on-background": "#191c1d",
+                      "error-container": "#ffdad6",
+                      "surface-bright": "#f8f9fa",
+                      "on-secondary-fixed": "#002106",
+                      "primary": "#00478d",
+                      "on-primary-fixed": "#001b3d",
+                      "on-tertiary-fixed": "#341100",
+                      "surface-container": "#edeeef",
+                      "surface-tint": "#005db6",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-primary-container": "#c8daff",
+                      "error": "#ba1a1a",
+                      "primary-container": "#005eb8",
+                      "secondary-container": "#80f98b",
+                      "on-primary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary-fixed-variant": "#00531a",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "background": "#f8f9fa",
+                      "tertiary": "#793100"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "lg": "24px",
+                      "sm": "12px",
+                      "touch-target-min": "48px",
+                      "md": "16px",
+                      "base": "8px",
+                      "xl": "32px",
+                      "gutter-mobile": "12px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "title-lg": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "label-lg": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["Inter"],
+                      "display-lg-mobile": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "display-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for web view */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #c2c6d4; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-surface text-primary font-title-lg text-title-lg-mobile md:text-title-lg w-full top-0 bg-surface-bright border-b border-outline-variant flex justify-between items-center px-margin-mobile md:px-lg py-sm sticky z-40">
+<div class="flex items-center gap-sm">
+<img alt="Max Mustermann" class="w-12 h-12 rounded-full object-cover border-2 border-surface shadow-sm" data-alt="A professional portrait of a male driver in a clean, high-key lighting environment. He is wearing a crisp, dark blue uniform shirt, exuding a sense of calm authority and reliability. The background is a slightly blurred, bright modern medical facility corridor. The color palette emphasizes cool whites, grays, and the deep primary blue of his uniform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUvncj032gu1Bxx4-GSsUhbQaNvHuNDTLNMnOicoPt_XV6ZfV97GaIRFrGW6t0Eev_p6gX-vWk8OUll0entWTa9j4d6NxLY_PmPK13vhHRPJoGjTrOGTRfVAPh59t24Xa2L66iy92fB2FcsG9LDg07mXy-aMHe3am43COlqnkuxkvHZGrp7TKIWWNyOaXZvGt_daGabeK5T3Z0WLlPINQ5WmLZ7jeEDp2Bl4NHXHKCtWt_zlE359c59SOO4Uhf5Aq14xGt4qmHhJM"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant">Willkommen zurück,</span>
+<span class="font-title-lg text-title-lg-mobile md:text-title-lg text-on-surface">Max Mustermann</span>
+</div>
+</div>
+<div class="font-title-lg text-title-lg-mobile text-primary font-bold hidden md:block">
+            Krankentransport
+        </div>
+<button class="text-on-surface-variant hover:bg-surface-container-high hover:scale-95 transition-all duration-150 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-3xl mx-auto px-margin-mobile md:px-lg pt-lg pb-[120px] flex flex-col gap-lg">
+<!-- Header Section -->
+<div class="flex justify-between items-end">
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface">Heutige Fahrten</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Mittwoch, 24. Mai</p>
+</div>
+<div class="bg-primary-container/10 text-primary-container px-sm py-xs rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">local_taxi</span>
+<span class="font-label-lg text-label-lg">3 Touren</span>
+</div>
+</div>
+<!-- Trips Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Active/Next Trip Card (Prominent) -->
+<article class="bg-surface rounded-xl border border-outline-variant shadow-sm p-md flex flex-col gap-md relative overflow-hidden md:col-span-2 hover:border-primary transition-colors">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="bg-primary text-on-primary w-10 h-10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant block">Nächste Fahrt • 10:30 Uhr</span>
+<h2 class="font-title-lg text-title-lg-mobile text-on-surface">Frau Schmidt, Maria</h2>
+</div>
+</div>
+<span class="bg-surface-container-high text-on-surface px-sm py-xs rounded-full font-label-md text-label-md border border-outline-variant">
+                        Ausstehend
+                    </span>
+</div>
+<div class="flex flex-col gap-sm bg-surface-container-low rounded-lg p-sm">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline mt-0.5 text-[20px]">my_location</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant block">Abholung</span>
+<span class="font-body-md text-body-md text-on-surface">Klinikum Nord, Station 4B</span>
+</div>
+</div>
+<div class="ml-2.5 w-[2px] h-4 bg-outline-variant"></div>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-primary mt-0.5 text-[20px]">location_on</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant block">Ziel</span>
+<span class="font-body-md text-body-md text-on-surface">Seniorenresidenz am Park, Zimmer 112</span>
+</div>
+</div>
+</div>
+<div class="flex gap-sm mt-2">
+<button class="flex-1 bg-primary text-on-primary font-label-lg text-label-lg h-touch-target-min rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm">
+<span class="material-symbols-outlined">play_arrow</span>
+                        Fahrt starten
+                    </button>
+<button class="w-touch-target-min h-touch-target-min border-2 border-outline-variant text-on-surface-variant rounded-lg flex items-center justify-center hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">map</span>
+</button>
+</div>
+</article>
+<!-- Completed Trip Card -->
+<article class="bg-surface rounded-xl border border-outline-variant p-md flex flex-col gap-md opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant block">Abgeschlossen • 08:15 Uhr</span>
+<h2 class="font-title-lg text-title-lg-mobile text-on-surface">Herr Müller, Hans</h2>
+</div>
+<span class="bg-secondary-container text-on-secondary-container px-sm py-xs rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                        Erledigt
+                    </span>
+</div>
+<div class="text-on-surface-variant font-body-md text-body-md">
+                    Heimatadresse → Dialysezentrum Süd
+                </div>
+</article>
+<!-- Later Upcoming Trip Card -->
+<article class="bg-surface rounded-xl border border-outline-variant p-md flex flex-col gap-md">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant block">Geplant • 14:00 Uhr</span>
+<h2 class="font-title-lg text-title-lg-mobile text-on-surface">Frau Weber, Anna</h2>
+</div>
+<span class="bg-surface-container-high text-on-surface px-sm py-xs rounded-full font-label-md text-label-md border border-outline-variant">
+                        Wartend
+                    </span>
+</div>
+<div class="text-on-surface-variant font-body-md text-body-md">
+                    Reha-Klinik Ost → Heimatadresse
+                </div>
+<div class="mt-auto pt-sm border-t border-outline-variant flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">wheelchair_pickup</span>
+<span class="font-label-md text-label-md">Rollstuhltransport (Tragestuhl)</span>
+</div>
+</article>
+</div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-[88px] md:bottom-[100px] right-margin-mobile md:right-lg z-50 bg-primary text-on-primary h-[64px] rounded-2xl flex items-center gap-sm px-lg shadow-[0_8px_16px_rgba(0,71,141,0.2)] hover:shadow-[0_12px_24px_rgba(0,71,141,0.3)] transition-all hover:-translate-y-1 group">
+<span class="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform" data-icon="document_scanner" style="font-variation-settings: 'FILL' 1;">document_scanner</span>
+<span class="font-label-lg text-label-lg whitespace-nowrap">Verordnung scannen</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-safe h-[80px] bg-surface bg-surface-container-lowest border-t border-outline-variant md:hidden">
+<!-- Active: Dashboard -->
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-xl py-1 scale-95 transition-all">
+<span class="material-symbols-outlined text-[24px]" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-md text-label-md mt-1 font-semibold">Dashboard</span>
+</button>
+<!-- Inactive: Scanner (Shell link, though FAB handles primary action) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-1 hover:bg-surface-variant rounded-xl transition-colors w-16">
+<span class="material-symbols-outlined text-[24px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="font-label-md text-label-md mt-1">Scanner</span>
+</button>
+<!-- Inactive: Archiv -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-1 hover:bg-surface-variant rounded-xl transition-colors w-16">
+<span class="material-symbols-outlined text-[24px]" data-icon="history">history</span>
+<span class="font-label-md text-label-md mt-1">Archiv</span>
+</button>
+<!-- Inactive: Profil -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-1 hover:bg-surface-variant rounded-xl transition-colors w-16">
+<span class="material-symbols-outlined text-[24px]" data-icon="person">person</span>
+<span class="font-label-md text-label-md mt-1">Profil</span>
+</button>
+</nav>
+</body></html>

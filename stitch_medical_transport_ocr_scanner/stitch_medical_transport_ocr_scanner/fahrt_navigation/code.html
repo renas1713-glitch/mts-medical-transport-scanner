@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fahrt Details - Krankentransport</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f8f9fa",
+                        "on-tertiary-fixed-variant": "#793100",
+                        "on-secondary-container": "#007327",
+                        "inverse-surface": "#2e3132",
+                        "inverse-primary": "#a9c7ff",
+                        "secondary": "#006e25",
+                        "surface-variant": "#e1e3e4",
+                        "on-primary-fixed-variant": "#00468c",
+                        "on-error-container": "#93000a",
+                        "outline": "#727783",
+                        "tertiary-container": "#9f4300",
+                        "on-tertiary-container": "#ffcfb9",
+                        "surface-container-low": "#f3f4f5",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9dadb",
+                        "on-surface": "#191c1d",
+                        "on-surface-variant": "#424752",
+                        "secondary-fixed-dim": "#66df75",
+                        "primary-fixed-dim": "#a9c7ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#83fc8e",
+                        "surface-container-high": "#e7e8e9",
+                        "outline-variant": "#c2c6d4",
+                        "tertiary-fixed": "#ffdbcb",
+                        "primary-fixed": "#d6e3ff",
+                        "on-background": "#191c1d",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f8f9fa",
+                        "on-secondary-fixed": "#002106",
+                        "primary": "#00478d",
+                        "on-primary-fixed": "#001b3d",
+                        "on-tertiary-fixed": "#341100",
+                        "surface-container": "#edeeef",
+                        "surface-tint": "#005db6",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-primary-container": "#c8daff",
+                        "error": "#ba1a1a",
+                        "primary-container": "#005eb8",
+                        "secondary-container": "#80f98b",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-secondary-fixed-variant": "#00531a",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "background": "#f8f9fa",
+                        "tertiary": "#793100"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "lg": "24px",
+                        "sm": "12px",
+                        "touch-target-min": "48px",
+                        "md": "16px",
+                        "base": "8px",
+                        "xl": "32px",
+                        "gutter-mobile": "12px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        /* Mobile Specific Tweaks for Bottom Nav spacing */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col font-body-md bg-background text-on-background">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-surface-variant flex justify-between items-center w-full px-margin-mobile md:px-lg py-sm sticky top-0 z-50">
+<div class="flex items-center gap-sm">
+<button aria-label="Zurück" class="h-touch-target-min w-touch-target-min flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="font-title-lg text-title-lg-mobile md:text-title-lg text-on-surface font-bold">Fahrt Details</h1>
+</div>
+<div class="flex items-center gap-sm">
+<button aria-label="Einstellungen" class="h-touch-target-min w-touch-target-min flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col px-margin-mobile md:px-lg py-md pb-32 gap-md max-w-3xl mx-auto w-full">
+<!-- Global Status Bar -->
+<div class="bg-primary-container text-on-primary-container p-sm rounded-lg flex items-center gap-sm shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+<span class="font-label-lg text-label-lg">Trip zugewiesen - Bereit zum Start</span>
+</div>
+<!-- Trip Summary Card -->
+<div class="bg-surface border border-outline-variant rounded-xl p-md flex flex-col gap-md shadow-sm">
+<div class="flex items-center justify-between border-b border-surface-variant pb-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Patiententransport</h2>
+<span class="bg-surface-container-high text-on-surface-variant px-sm py-xs rounded-full font-label-md text-label-md">ID: K-9382</span>
+</div>
+<!-- Route Details -->
+<div class="flex flex-col gap-sm relative pl-6">
+<!-- Timeline visual line -->
+<div class="absolute left-2.5 top-3 bottom-3 w-[2px] bg-outline-variant rounded-full"></div>
+<!-- Origin -->
+<div class="relative">
+<div class="absolute -left-6 top-1 w-3 h-3 bg-secondary rounded-full border-2 border-surface"></div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Abholort</p>
+<p class="font-body-lg text-body-lg text-on-surface font-semibold">Mühlenstraße 56</p>
+<p class="font-body-md text-body-md text-on-surface-variant">45657 Recklinghausen</p>
+</div>
+<!-- Destination -->
+<div class="relative mt-sm">
+<div class="absolute -left-6 top-1 w-3 h-3 bg-primary rounded-full border-2 border-surface"></div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Zielort</p>
+<p class="font-body-lg text-body-lg text-on-surface font-semibold">Kinderklinik Datteln</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Dr.-Friedrich-Steiner-Str. 5, 45711 Datteln</p>
+</div>
+</div>
+<!-- Patient Info snippet -->
+<div class="bg-surface-container-low rounded-lg p-sm flex items-center gap-sm mt-xs">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">person</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant">Patient</p>
+<p class="font-body-md text-body-md text-on-surface">Max Mustermann (Rollstuhl)</p>
+</div>
+</div>
+</div>
+<!-- Primary Actions Group -->
+<div class="flex flex-col gap-sm mt-auto md:mt-lg">
+<button class="w-full bg-primary-container text-on-primary-container h-[64px] rounded-lg font-title-lg text-title-lg flex items-center justify-center gap-sm hover:opacity-90 transition-opacity shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+                Navigation starten
+            </button>
+<button class="w-full border-2 border-outline-variant text-outline-variant h-[56px] rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-sm opacity-50 cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">check_circle</span>
+                Fahrt abschließen
+            </button>
+<p class="text-center font-label-md text-label-md text-on-surface-variant mt-1">Nur aktivierbar wenn Navigation gestartet</p>
+</div>
+</main>
+<!-- Footer Privacy Note -->
+<footer class="bg-surface-container border-t border-surface-variant py-sm px-margin-mobile text-center fixed bottom-[72px] md:bottom-0 w-full z-40">
+<p class="font-label-md text-label-md text-outline flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0;">shield</span>
+            Daten werden DSGVO-konform verarbeitet.
+        </p>
+</footer>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface border-t border-outline-variant fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-safe h-[72px]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-xs hover:bg-surface-variant rounded-lg transition-colors w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-lg px-sm py-xs w-16 transition-all scale-95">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+<span class="font-label-md text-label-md">Fahrt</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-xs hover:bg-surface-variant rounded-lg transition-colors w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">history</span>
+<span class="font-label-md text-label-md">Archiv</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-xs hover:bg-surface-variant rounded-lg transition-colors w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-md text-label-md">Profil</span>
+</button>
+</nav>
+</body></html>
