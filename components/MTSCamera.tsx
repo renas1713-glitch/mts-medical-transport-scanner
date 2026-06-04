@@ -27,6 +27,22 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const OVERLAY_WIDTH = SCREEN_WIDTH * 0.85;
 const OVERLAY_HEIGHT = OVERLAY_WIDTH * 1.41; // A4 aspect ratio approx
 
+// Performance Optimization: Move static structures outside the functional component
+// so they aren't needlessly recreated per 60FPS animation render
+const TIPS_LIST = [
+  'Formular im Rahmen ausrichten. Kontrast beachten.',
+  'Tipp: Halten Sie das Dokument flach und vermeiden Sie Schatten.',
+  'Kamera stabilisieren. Optimale Helligkeit wird angestrebt.',
+  'Tipp: Gute Ausleuchtung sorgt für 95%+ OCR-Genauigkeit.',
+];
+
+const TEMPLATES_INFO = [
+  { label: 'Form A (Standard)', desc: 'Hinfahrt, Korrekturen' },
+  { label: 'Form B (Rückfahrt)', desc: 'Mitte, Typo-Bereinigung' },
+  { label: 'Form C (Hin- & Rück)', desc: 'Beide Checkboxen aktiv' },
+  { label: 'Form D (Unvollständig)', desc: 'Keine Fahrtart' },
+];
+
 export const MTSCamera: React.FC<MTSCameraProps> = ({
   onScanCompleted,
   onCancel,
@@ -50,13 +66,6 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
     scanForm,
     mockTemplatesCount,
   } = useMTSOCR();
-
-  const tipsList = [
-    'Formular im Rahmen ausrichten. Kontrast beachten.',
-    'Tipp: Halten Sie das Dokument flach und vermeiden Sie Schatten.',
-    'Kamera stabilisieren. Optimale Helligkeit wird angestrebt.',
-    'Tipp: Gute Ausleuchtung sorgt für 95%+ OCR-Genauigkeit.',
-  ];
 
   // Breathe effect for scanning boundaries
   useEffect(() => {
@@ -102,10 +111,10 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
   useEffect(() => {
     if (isProcessing) return;
     const interval = setInterval(() => {
-      setCurrentTip((prev) => (prev + 1) % tipsList.length);
+      setCurrentTip((prev) => (prev + 1) % TIPS_LIST.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [isProcessing, tipsList.length]);
+  }, [isProcessing]);
 
   // Handle OCR result completed
   useEffect(() => {
@@ -126,13 +135,6 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
     const dummyUri = `file:///app_cache/scanned_page_${selectedTemplate}.jpg`;
     await scanForm(dummyUri, selectedTemplate);
   };
-
-  const templatesInfo = [
-    { label: 'Form A (Standard)', desc: 'Hinfahrt, Korrekturen' },
-    { label: 'Form B (Rückfahrt)', desc: 'Mitte, Typo-Bereinigung' },
-    { label: 'Form C (Hin- & Rück)', desc: 'Beide Checkboxen aktiv' },
-    { label: 'Form D (Unvollständig)', desc: 'Keine Fahrtart' },
-  ];
 
   if (!permission && Platform.OS !== 'web') {
     return (
@@ -183,7 +185,7 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
                 <View style={styles.mockFormBox}>
                   <Text style={styles.mockFormLabel}>1. Abholort (Patient)</Text>
                   <Text style={styles.mockFormValue}>
-                    {templatesInfo[selectedTemplate].label}
+                    {TEMPLATES_INFO[selectedTemplate].label}
                   </Text>
                 </View>
               </View>
@@ -262,7 +264,7 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
           <Text style={styles.tooltipText}>
             {isProcessing
               ? 'Wird analysiert... Bitte ruhig halten'
-              : tipsList[currentTip]}
+              : TIPS_LIST[currentTip]}
           </Text>
         </View>
       </View>
@@ -302,7 +304,7 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.templatesScroll}
         >
-          {templatesInfo.map((tpl, idx) => (
+          {TEMPLATES_INFO.map((tpl, idx) => (
             <TouchableOpacity
               key={idx}
               onPress={() => setSelectedTemplate(idx)}
