@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,12 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt: wrap render function in useCallback to avoid recreating it on every render, preventing unnecessary FlatList item re-renders
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +177,31 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // ⚡ Bolt: Replace multiple O(N) filter/reduce operations during render with a single O(N) memoized pass.
+  // Impact: O(2N) -> O(N), computation only runs when `trips` array actually changes, not on every render.
+  const dashboardStats = useMemo(() => {
+    if (trips.length === 0) {
+      return { total: 0, settled: 0, accuracy: 0 };
+    }
+
+    let settledCount = 0;
+    let confidenceSum = 0;
+
+    for (let i = 0; i < trips.length; i++) {
+      if (trips[i].status === 'Abgerechnet') {
+        settledCount++;
+      }
+      confidenceSum += trips[i].confidence;
+    }
+
+    return {
+      total: trips.length,
+      settled: settledCount,
+      accuracy: Math.round((confidenceSum / trips.length) * 100)
+    };
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -200,18 +224,18 @@ export default function App() {
           {/* Quick Stats banner */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>{trips.length}</Text>
+              <Text style={styles.statNum}>{dashboardStats.total}</Text>
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {dashboardStats.settled}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {dashboardStats.total > 0 ? `${dashboardStats.accuracy}%` : '0%'}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>

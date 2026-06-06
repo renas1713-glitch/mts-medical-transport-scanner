@@ -1,0 +1,3 @@
+## 2024-10-27 - [App.tsx Dashboard Render Optimization]
+**Learning:** In the MedDrive Core app, multiple `O(N)` list traversal methods (e.g., `.filter` and `.reduce`) inside render elements (like `App.tsx` quick stats) caused redundant iterations and impacted performance during every state change. Additionally, unmemoized callbacks for `FlatList` elements trigger expensive re-renders.
+**Action:** Replace inline iterations with a single `useMemo` pass that consolidates stats gathering (`O(2N)` -> `O(N)`). Use `useCallback` on handler functions (`handleStartNavigation` and `renderTripCard`) to maintain reference stability for `FlatList` component children.
