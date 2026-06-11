@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,13 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // Wrap in useCallback to prevent recreation on every render, improving FlatList performance
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // Wrap in useCallback to prevent unnecessary re-renders of FlatList items when App component updates
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +178,14 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // Memoize OCR accuracy calculation to prevent redundant computation on re-renders
+  const ocrAccuracy = useMemo(() => {
+    if (trips.length === 0) return '0%';
+    const totalConfidence = trips.reduce((acc, t) => acc + t.confidence, 0);
+    return `${Math.round((totalConfidence / trips.length) * 100)}%`;
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -211,7 +219,7 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
