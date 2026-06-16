@@ -1,0 +1,3 @@
+## 2024-06-16 - FlatList renderItem and Callback Memoization
+**Learning:** `FlatList` component will re-render its list items completely if the function provided to the `renderItem` prop is not stable across renders of its parent component. We observed that the core App component was recreating `renderTripCard` on every render, sacrificing potential performance. In addition, computing statistics directly in the render method via reduce arrays can be expensive on every state change.
+**Action:** Use `useCallback` to memoize the function passed to the `FlatList` `renderItem` prop and ensure all functions passed as callbacks inside the renderItem are also memoized with `useCallback`. Use `useMemo` for any derived statistics computations.
