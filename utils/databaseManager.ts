@@ -159,6 +159,8 @@ export const saveTrip = async (trip: SavedTrip): Promise<SavedTrip> => {
 
 /**
  * Iterates over local trips and uploads any unsynced ones.
+ * ⚡ Bolt Optimization: Uses Promise.all to sync pending trips concurrently
+ * instead of sequentially, reducing total network time (N+1 bottleneck).
  */
 export const syncPendingTrips = async (): Promise<void> => {
   if (!isSupabaseConfigured()) return;
@@ -167,17 +169,24 @@ export const syncPendingTrips = async (): Promise<void> => {
 
   try {
     const trips = await getLocalTrips();
-    let hasChanges = false;
 
-    for (const trip of trips) {
-      if (!trip.synced) {
+    // Find all trips that need syncing
+    const pendingTrips = trips.filter(trip => !trip.synced);
+    if (pendingTrips.length === 0) return;
+
+    // Execute all uploads concurrently
+    const results = await Promise.all(
+      pendingTrips.map(async (trip) => {
         const success = await uploadTripToSupabase(trip);
         if (success) {
           trip.synced = true;
-          hasChanges = true;
         }
-      }
-    }
+        return success;
+      })
+    );
+
+    // If any sync was successful, we have changes to save
+    const hasChanges = results.some(success => success);
 
     if (hasChanges) {
       await saveLocalTrips(trips);
