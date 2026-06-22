@@ -71,6 +71,58 @@ const INITIAL_TRIPS: SavedTrip[] = [
   }
 ];
 
+// Memoized TripCard to prevent unnecessary re-renders in FlatList
+const TripCard = React.memo(({ item, onStartNavigation }: { item: SavedTrip, onStartNavigation: (address: string) => void }) => {
+  return (
+    <View style={styles.tripCard}>
+      <View style={styles.tripCardHeader}>
+        <View>
+          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
+          <Text style={styles.tripCardDate}>{item.date}</Text>
+        </View>
+        <View style={[
+          styles.statusChip,
+          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
+        ]}>
+          <Text style={[
+            styles.statusText,
+            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
+          ]}>
+            {item.status}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.tripCardDetails}>
+        <View style={styles.addressRow}>
+          <Text style={styles.addressLabel}>Start:</Text>
+          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
+        </View>
+        <View style={styles.addressRow}>
+          <Text style={styles.addressLabel}>Ziel:</Text>
+          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
+        </View>
+      </View>
+
+      <View style={styles.tripCardActions}>
+        <TouchableOpacity
+          onPress={() => onStartNavigation(item.abholort)}
+          style={styles.cardActionBtn}
+        >
+          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => onStartNavigation(item.zielort)}
+          style={styles.cardActionBtn}
+        >
+          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+});
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'scanner' | 'review'>('dashboard');
   const [trips, setTrips] = useState<SavedTrip[]>([]);
@@ -125,59 +177,29 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  const handleStartNavigation = React.useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripCardHeader}>
-        <View>
-          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
-          <Text style={styles.tripCardDate}>{item.date}</Text>
-        </View>
-        <View style={[
-          styles.statusChip,
-          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
-        ]}>
-          <Text style={[
-            styles.statusText,
-            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
-          ]}>
-            {item.status}
-          </Text>
-        </View>
-      </View>
+  const renderTripCard = React.useCallback(({ item }: { item: SavedTrip }) => (
+    <TripCard item={item} onStartNavigation={handleStartNavigation} />
+  ), [handleStartNavigation]);
 
-      <View style={styles.tripCardDetails}>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Start:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
-        </View>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Ziel:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
-        </View>
-      </View>
+  // Memoize dashboard stats calculations
+  const { totalTrips, settledTrips, avgConfidence } = React.useMemo(() => {
+    const total = trips.length;
+    const settled = trips.filter(t => t.status === 'Abgerechnet').length;
+    const confidence = total > 0
+      ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / total * 100)}%`
+      : '0%';
 
-      <View style={styles.tripCardActions}>
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.abholort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.zielort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    return {
+      totalTrips: total,
+      settledTrips: settled,
+      avgConfidence: confidence
+    };
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -200,19 +222,15 @@ export default function App() {
           {/* Quick Stats banner */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>{trips.length}</Text>
+              <Text style={styles.statNum}>{totalTrips}</Text>
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
-              </Text>
+              <Text style={styles.statNum}>{settledTrips}</Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
-              </Text>
+              <Text style={styles.statNum}>{avgConfidence}</Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
           </View>
