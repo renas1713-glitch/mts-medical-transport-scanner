@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,32 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
+
+  // Performance optimization: calculate stats in a single pass O(n) instead of O(n) + O(n) on render
+  const stats = useMemo(() => {
+    let settledCount = 0;
+    let confidenceSum = 0;
+
+    for (let i = 0; i < trips.length; i++) {
+      if (trips[i].status === 'Abgerechnet') {
+        settledCount++;
+      }
+      confidenceSum += trips[i].confidence;
+    }
+
+    return {
+      settledCount,
+      averageAccuracy: trips.length > 0
+        ? `${Math.round((confidenceSum / trips.length) * 100)}%`
+        : '0%'
+    };
+  }, [trips]);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +197,9 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  const keyExtractor = useCallback((item: SavedTrip) => item.id, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +227,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {stats.settledCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {stats.averageAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
@@ -233,7 +255,7 @@ export default function App() {
           ) : (
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               renderItem={renderTripCard}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
