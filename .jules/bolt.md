@@ -1,0 +1,3 @@
+## 2024-05-18 - Memoizing FlatList Render Item and Array Operations
+**Learning:** React Native's `FlatList` renders can be performance bottlenecks if the `renderItem` prop receives a new function reference every time the parent component (`App.tsx` here) re-renders. Combined with inline O(n) array operations (like `.filter` and `.reduce` inside the render function), this causes severe unneeded re-rendering overhead on complex screens.
+**Action:** Always extract inline iteration logic into `useMemo` hooks, aggregating the computations into a single loop. Wrap the `FlatList`'s `renderItem` function and any nested handler callbacks (like `handleStartNavigation`) with `useCallback` to ensure the list items don't re-render unless explicitly intended.

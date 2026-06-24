@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,14 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // BOLT OPTIMIZATION: Memoize nested handler to avoid FlatList item re-renders
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // BOLT OPTIMIZATION: Memoize renderItem function to avoid FlatList unneeded re-renders
+  // when parent components update.
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +179,29 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // BOLT OPTIMIZATION: Combine multiple O(n) array operations (filter, reduce)
+  // into a single loop to reduce CPU cycles and memoize the result.
+  const dashboardStats = useMemo(() => {
+    if (trips.length === 0) return { total: 0, settled: 0, accuracy: '0%' };
+
+    let settledCount = 0;
+    let confidenceSum = 0;
+
+    for (const trip of trips) {
+      if (trip.status === 'Abgerechnet') settledCount++;
+      confidenceSum += trip.confidence;
+    }
+
+    const accuracy = `${Math.round((confidenceSum / trips.length) * 100)}%`;
+
+    return {
+      total: trips.length,
+      settled: settledCount,
+      accuracy
+    };
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -200,18 +224,18 @@ export default function App() {
           {/* Quick Stats banner */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>{trips.length}</Text>
+              <Text style={styles.statNum}>{dashboardStats.total}</Text>
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {dashboardStats.settled}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {dashboardStats.accuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
