@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -97,12 +97,12 @@ export default function App() {
   }, []);
 
   // Navigation callbacks
-  const handleScanCompleted = (data: MTSFormData, imageUri: string) => {
+  const handleScanCompleted = useCallback((data: MTSFormData, imageUri: string) => {
     setActiveScannedData(data);
     setCurrentScreen('review');
-  };
+  }, []);
 
-  const handleReviewSaved = (savedTrip: SavedTrip) => {
+  const handleReviewSaved = useCallback((savedTrip: SavedTrip) => {
     setTrips(prev => {
       const idx = prev.findIndex(t => t.id === savedTrip.id);
       if (idx >= 0) {
@@ -114,23 +114,25 @@ export default function App() {
     });
     setActiveScannedData(null);
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleCancelScanner = () => {
+  const handleCancelScanner = useCallback(() => {
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleCancelReview = () => {
+  const handleCancelReview = useCallback(() => {
     setActiveScannedData(null);
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt Optimization: Memoize the navigation handler so it doesn't cause child re-renders
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt Optimization: Memoize the render function to prevent FlatList from re-rendering all items
+  // when App state changes (like switching screens)
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +179,19 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // ⚡ Bolt Optimization: Memoize key extractor function
+  const keyExtractor = useCallback((item: SavedTrip) => item.id, []);
+
+  // ⚡ Bolt Optimization: Memoize expensive array operations to prevent O(n) calculations on every render
+  const settledTripsCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+
+  const averageConfidence = useMemo(() => {
+    if (trips.length === 0) return '0%';
+    const totalConfidence = trips.reduce((acc, t) => acc + t.confidence, 0);
+    return `${Math.round(totalConfidence / trips.length * 100)}%`;
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +219,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {settledTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {averageConfidence}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
@@ -233,7 +247,7 @@ export default function App() {
           ) : (
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               renderItem={renderTripCard}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
