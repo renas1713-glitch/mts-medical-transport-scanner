@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -97,12 +97,14 @@ export default function App() {
   }, []);
 
   // Navigation callbacks
-  const handleScanCompleted = (data: MTSFormData, imageUri: string) => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders of child components
+  const handleScanCompleted = useCallback((data: MTSFormData, imageUri: string) => {
     setActiveScannedData(data);
     setCurrentScreen('review');
-  };
+  }, []);
 
-  const handleReviewSaved = (savedTrip: SavedTrip) => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders
+  const handleReviewSaved = useCallback((savedTrip: SavedTrip) => {
     setTrips(prev => {
       const idx = prev.findIndex(t => t.id === savedTrip.id);
       if (idx >= 0) {
@@ -114,23 +116,27 @@ export default function App() {
     });
     setActiveScannedData(null);
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleCancelScanner = () => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders
+  const handleCancelScanner = useCallback(() => {
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleCancelReview = () => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders
+  const handleCancelReview = useCallback(() => {
     setActiveScannedData(null);
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt: Memoized handler to prevent unnecessary re-renders
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
+  // ⚡ Bolt: Memoized FlatList render item to prevent unnecessary re-renders of list items on state changes
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +183,11 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // ⚡ Bolt: Memoize expensive array operations to prevent recalculation on every re-render
+  const settledTripsCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+  const ocrAccuracyStr = useMemo(() => trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%', [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +215,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {settledTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrAccuracyStr}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
