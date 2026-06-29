@@ -45,6 +45,44 @@ export const isOnline = async (): Promise<boolean> => {
 };
 
 /**
+ * Helper to upload multiple trips to Supabase in a single batch.
+ */
+const uploadTripsToSupabase = async (trips: SavedTrip[]): Promise<boolean> => {
+  if (trips.length === 0) return true;
+
+  try {
+    const dbTrips = trips.map(trip => ({
+      id: trip.id,
+      abholort: trip.abholort,
+      zielort: trip.zielort,
+      fahrtart: trip.fahrtart,
+      hinfahrt_box_checked: trip.hinfahrtBoxChecked,
+      rueckfahrt_box_checked: trip.rueckfahrtBoxChecked,
+      confidence: trip.confidence,
+      file: trip.file,
+      status: trip.status,
+      date: trip.date,
+      coordinates: trip.coordinates,
+      raw_details: trip.rawDetails,
+      created_at: new Date().toISOString()
+    }));
+
+    const { error } = await supabase
+      .from('trips')
+      .upsert(dbTrips, { onConflict: 'id' });
+
+    if (error) {
+      console.warn('Supabase batch sync error (table may not exist or schema mismatch):', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Network or internal error uploading trips to Supabase:', err);
+    return false;
+  }
+};
+
+/**
  * Helper to upload a trip to Supabase.
  */
 const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
@@ -167,19 +205,18 @@ export const syncPendingTrips = async (): Promise<void> => {
 
   try {
     const trips = await getLocalTrips();
-    let hasChanges = false;
+    const pendingTrips = trips.filter(trip => !trip.synced);
 
-    for (const trip of trips) {
-      if (!trip.synced) {
-        const success = await uploadTripToSupabase(trip);
-        if (success) {
+    if (pendingTrips.length === 0) return;
+
+    const success = await uploadTripsToSupabase(pendingTrips);
+
+    if (success) {
+      for (const trip of trips) {
+        if (!trip.synced) {
           trip.synced = true;
-          hasChanges = true;
         }
       }
-    }
-
-    if (hasChanges) {
       await saveLocalTrips(trips);
     }
   } catch (err) {
