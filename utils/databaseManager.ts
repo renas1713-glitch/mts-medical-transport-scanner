@@ -45,11 +45,13 @@ export const isOnline = async (): Promise<boolean> => {
 };
 
 /**
- * Helper to upload a trip to Supabase.
+ * Helper to upload multiple trips to Supabase in a single request.
  */
-const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
+const uploadTripsToSupabase = async (trips: SavedTrip[]): Promise<boolean> => {
+  if (trips.length === 0) return true;
+
   try {
-    const dbTrip = {
+    const dbTrips = trips.map(trip => ({
       id: trip.id,
       abholort: trip.abholort,
       zielort: trip.zielort,
@@ -63,11 +65,11 @@ const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
       coordinates: trip.coordinates,
       raw_details: trip.rawDetails,
       created_at: new Date().toISOString()
-    };
+    }));
 
     const { error } = await supabase
       .from('trips')
-      .upsert(dbTrip, { onConflict: 'id' });
+      .upsert(dbTrips, { onConflict: 'id' });
 
     if (error) {
       console.warn('Supabase sync error (table may not exist or schema mismatch):', error.message);
@@ -75,7 +77,7 @@ const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
     }
     return true;
   } catch (err) {
-    console.warn('Network or internal error uploading trip to Supabase:', err);
+    console.warn('Network or internal error uploading trips to Supabase:', err);
     return false;
   }
 };
@@ -140,7 +142,7 @@ export const saveTrip = async (trip: SavedTrip): Promise<SavedTrip> => {
   if (isSupabaseConfigured()) {
     const online = await isOnline();
     if (online) {
-      const success = await uploadTripToSupabase(updatedTrip);
+      const success = await uploadTripsToSupabase([updatedTrip]);
       if (success) {
         updatedTrip.synced = true;
         // Update synced flag in local storage
@@ -158,7 +160,7 @@ export const saveTrip = async (trip: SavedTrip): Promise<SavedTrip> => {
 };
 
 /**
- * Iterates over local trips and uploads any unsynced ones.
+ * Iterates over local trips and uploads any unsynced ones in a single batched request.
  */
 export const syncPendingTrips = async (): Promise<void> => {
   if (!isSupabaseConfigured()) return;
@@ -167,20 +169,25 @@ export const syncPendingTrips = async (): Promise<void> => {
 
   try {
     const trips = await getLocalTrips();
-    let hasChanges = false;
 
-    for (const trip of trips) {
-      if (!trip.synced) {
-        const success = await uploadTripToSupabase(trip);
-        if (success) {
-          trip.synced = true;
-          hasChanges = true;
+    // Filter unsynced trips
+    const unsyncedTrips = trips.filter(trip => !trip.synced);
+
+    if (unsyncedTrips.length === 0) return;
+
+    // Batch upload all unsynced trips
+    const success = await uploadTripsToSupabase(unsyncedTrips);
+
+    if (success) {
+      // Mark all uploaded trips as synced
+      const updatedTrips = trips.map(trip => {
+        if (!trip.synced) {
+          return { ...trip, synced: true };
         }
-      }
-    }
+        return trip;
+      });
 
-    if (hasChanges) {
-      await saveLocalTrips(trips);
+      await saveLocalTrips(updatedTrips);
     }
   } catch (err) {
     console.warn('Error during background pending trips sync:', err);
