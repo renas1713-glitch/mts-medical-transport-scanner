@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -129,8 +129,20 @@ export default function App() {
     openMapsWithAddress(address);
   };
 
+  // ⚡ Bolt Optimization: Memoize the derived stats to avoid O(N) recalculations on every render.
+  // 💡 Impact: Prevents unnecessary iteration over the full `trips` array during state updates.
+  const stats = useMemo(() => {
+    const settled = trips.filter(t => t.status === 'Abgerechnet').length;
+    const accuracy = trips.length > 0
+      ? Math.round((trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length) * 100)
+      : 0;
+    return { settled, accuracy };
+  }, [trips]);
+
+  // ⚡ Bolt Optimization: Memoize renderTripCard with useCallback
+  // 💡 Impact: Provides stable reference to FlatList, reducing list item re-renders
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +189,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), []); // Dependencies are empty since it only depends on the item argument and styles (static)
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +217,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {stats.settled}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {stats.accuracy}%
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
