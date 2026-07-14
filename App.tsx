@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -71,6 +71,62 @@ const INITIAL_TRIPS: SavedTrip[] = [
   }
 ];
 
+// ⚡ Bolt: Extracted TripCard and memoized it with React.memo()
+// 💡 What: Prevents unnecessary re-renders of list items in FlatList
+// 🎯 Why: When App's state changes (e.g. currentScreen), inline rendering would cause all items to re-render
+// 📊 Impact: Significantly reduces JS thread workload when navigating or modifying single items.
+// 🔬 Measurement: Use React Profiler to verify TripCard components don't render when App state changes.
+const TripCard = React.memo(({ item, onNavigate }: { item: SavedTrip; onNavigate: (address: string) => void }) => {
+  return (
+    <View style={styles.tripCard}>
+      <View style={styles.tripCardHeader}>
+        <View>
+          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
+          <Text style={styles.tripCardDate}>{item.date}</Text>
+        </View>
+        <View style={[
+          styles.statusChip,
+          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
+        ]}>
+          <Text style={[
+            styles.statusText,
+            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
+          ]}>
+            {item.status}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.tripCardDetails}>
+        <View style={styles.addressRow}>
+          <Text style={styles.addressLabel}>Start:</Text>
+          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
+        </View>
+        <View style={styles.addressRow}>
+          <Text style={styles.addressLabel}>Ziel:</Text>
+          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
+        </View>
+      </View>
+
+      <View style={styles.tripCardActions}>
+        <TouchableOpacity
+          onPress={() => onNavigate(item.abholort)}
+          style={styles.cardActionBtn}
+        >
+          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => onNavigate(item.zielort)}
+          style={styles.cardActionBtn}
+        >
+          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+});
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'scanner' | 'review'>('dashboard');
   const [trips, setTrips] = useState<SavedTrip[]>([]);
@@ -125,59 +181,23 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt: Memoized handler to maintain stable reference
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripCardHeader}>
-        <View>
-          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
-          <Text style={styles.tripCardDate}>{item.date}</Text>
-        </View>
-        <View style={[
-          styles.statusChip,
-          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
-        ]}>
-          <Text style={[
-            styles.statusText,
-            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
-          ]}>
-            {item.status}
-          </Text>
-        </View>
-      </View>
+  // ⚡ Bolt: Memoized render function for FlatList to avoid unnecessary re-renders
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
+    <TripCard item={item} onNavigate={handleStartNavigation} />
+  ), [handleStartNavigation]);
 
-      <View style={styles.tripCardDetails}>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Start:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
-        </View>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Ziel:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardActions}>
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.abholort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.zielort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  // ⚡ Bolt: Memoize derived statistics
+  // 💡 What: Wrap array operations in useMemo
+  // 🎯 Why: Previously, array filtering and reduction ran on *every* render of App.tsx
+  // 📊 Impact: O(n) array operations are now only executed when `trips` actually changes.
+  const settledTripsCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+  const ocrAccuracy = useMemo(() => trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%', [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +225,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {settledTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
