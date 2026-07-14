@@ -1,0 +1,3 @@
+## 2026-07-14 - Inline Function FlatList Issue
+**Learning:** In App.tsx, the 'renderTripCard' function passed to FlatList's 'renderItem' prop was defined inline within the App component. Additionally, it contained anonymous functions for button 'onPress' events. This caused all list items to needlessly re-render every time App re-rendered, as these functions received new memory addresses each time.
+**Action:** Extract render items for large lists into their own separate components using React.memo(), wrap the extracted list item component's callback props with useCallback inside the parent component, and pass the memoized callback to the list component instead of defining inline arrow functions.
