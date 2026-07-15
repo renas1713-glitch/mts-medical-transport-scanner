@@ -13,27 +13,31 @@ export interface OCRElement {
   height: number;
 }
 
+const REPLACEMENTS_MAP: Record<string, string> = {
+  'KMSerkiinik': 'Kinderklinik',
+  'Neurop&atrie': 'Neuropädiatrie',
+  'Krankenbeirderung': 'Krankenbeförderung',
+};
+
+// Pre-compile regular expressions to avoid recompilation on every call
+// Optimization: Moved outside the function to improve OCR post-processing speed
+const PRECOMPILED_REGEXES = Object.keys(REPLACEMENTS_MAP).map((typo) => ({
+  regex: new RegExp(typo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi'),
+  replacement: REPLACEMENTS_MAP[typo],
+}));
+
 /**
  * Standardizes common typos from OCR scans.
  */
 export const correctTypos = (text: string): string => {
   if (!text) return '';
   let corrected = text;
-  
-  // Define standard replacement map
-  const replacements: { [key: string]: string } = {
-    'KMSerkiinik': 'Kinderklinik',
-    'Neurop&atrie': 'Neuropädiatrie',
-    'Krankenbeirderung': 'Krankenbeförderung',
-  };
 
-  // Perform word-based or substring replacements
-  Object.keys(replacements).forEach((typo) => {
-    const replacement = replacements[typo];
-    // Case-insensitive replacement
-    const regex = new RegExp(typo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+  // Perform word-based or substring replacements using precompiled regexes
+  for (let i = 0; i < PRECOMPILED_REGEXES.length; i++) {
+    const { regex, replacement } = PRECOMPILED_REGEXES[i];
     corrected = corrected.replace(regex, replacement);
-  });
+  }
 
   return corrected;
 };
