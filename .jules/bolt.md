@@ -1,0 +1,3 @@
+## 2026-07-16 - [React Native FlatList Optimization]
+**Learning:** Inline functions for `renderItem` in `FlatList` and inline array reductions/filters in the main render body cause unnecessary re-renders of list items and expensive recalculations when unrelated parent state changes (e.g. screen transitions). React Native's `FlatList` deeply relies on referential equality of `renderItem`.
+**Action:** Wrap `FlatList` `renderItem` functions and their dependencies in `useCallback`. Extract derived state calculations (like array filtering/reducing) into `useMemo` hooks bound to their specific data sources.
