@@ -1,0 +1,3 @@
+## 2024-07-17 - React Native FlatList & App Computations
+**Learning:** Found array operations (filter/reduce) and FlatList's renderItem function defined inline within the App component's render body. In React Native, this recalculates derived data on every state change and degrades list scrolling performance. Furthermore, using filter and reduce creates multiple passes and intermediate arrays.
+**Action:** Extracted derived data computations into a single-pass useMemo hook, and wrapped the FlatList renderItem function in useCallback to avoid redundant main-thread work and preserve FlatList optimizations.

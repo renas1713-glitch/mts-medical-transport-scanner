@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -130,7 +130,8 @@ export default function App() {
   };
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt Optimization: Wrap renderItem in useCallback to prevent re-renders in FlatList
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +178,23 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), []);
+
+  // ⚡ Bolt Optimization: Memoize derived stats to avoid recalculating on every render
+  const stats = useMemo(() => {
+    const total = trips.length;
+    let settled = 0;
+    let confidenceSum = 0;
+
+    for (let i = 0; i < total; i++) {
+      if (trips[i].status === 'Abgerechnet') settled++;
+      confidenceSum += trips[i].confidence;
+    }
+
+    const accuracy = total > 0 ? `${Math.round((confidenceSum / total) * 100)}%` : '0%';
+
+    return { total, settled, accuracy };
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -200,19 +217,15 @@ export default function App() {
           {/* Quick Stats banner */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>{trips.length}</Text>
+              <Text style={styles.statNum}>{stats.total}</Text>
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
-              </Text>
+              <Text style={styles.statNum}>{stats.settled}</Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
-              </Text>
+              <Text style={styles.statNum}>{stats.accuracy}</Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
           </View>
