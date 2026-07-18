@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,16 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // Memoized stats to prevent O(N) recalculation on render
+  const transmittedCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+  const ocrAccuracy = useMemo(() => trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%', [trips]);
+
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +181,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -204,15 +208,11 @@ export default function App() {
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
-              </Text>
+              <Text style={styles.statNum}>{transmittedCount}</Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
-              </Text>
+              <Text style={styles.statNum}>{ocrAccuracy}</Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
           </View>
