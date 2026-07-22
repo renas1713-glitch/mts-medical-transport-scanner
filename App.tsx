@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -97,6 +97,15 @@ export default function App() {
   }, []);
 
   // Navigation callbacks
+  // ⚡ Bolt Optimization: Memoize dashboard stats
+  // Impact: Prevents O(N) filtering and reduction calculations on every re-render (saving compute on trips.length items)
+  const dashboardStats = useMemo(() => {
+    const total = trips.length;
+    const settled = trips.filter(t => t.status === 'Abgerechnet').length;
+    const avgConfidence = total > 0 ? Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / total * 100) : 0;
+    return { total, settled, avgConfidence };
+  }, [trips]);
+
   const handleScanCompleted = (data: MTSFormData, imageUri: string) => {
     setActiveScannedData(data);
     setCurrentScreen('review');
@@ -125,12 +134,16 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt Optimization: Wrap with useCallback
+  // Impact: Prevents unnecessary function recreation on every render, stabilizing reference for renderTripCard
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt Optimization: Wrap with useCallback
+  // Impact: Prevents FlatList from unnecessarily re-rendering all items when parent state (like currentScreen) changes
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +190,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -200,18 +213,18 @@ export default function App() {
           {/* Quick Stats banner */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>{trips.length}</Text>
+              <Text style={styles.statNum}>{dashboardStats.total}</Text>
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {dashboardStats.settled}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {dashboardStats.avgConfidence}%
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
