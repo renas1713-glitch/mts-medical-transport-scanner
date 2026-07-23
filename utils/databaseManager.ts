@@ -45,11 +45,15 @@ export const isOnline = async (): Promise<boolean> => {
 };
 
 /**
- * Helper to upload a trip to Supabase.
+ * Helper to upload a batch of trips to Supabase in a single network request.
+ * ⚡ Bolt: Batching Database Requests Optimization
+ * Reduces network requests from O(N) to O(1).
  */
-const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
+const uploadTripsToSupabase = async (trips: SavedTrip[]): Promise<boolean> => {
+  if (trips.length === 0) return true;
+
   try {
-    const dbTrip = {
+    const dbTrips = trips.map(trip => ({
       id: trip.id,
       abholort: trip.abholort,
       zielort: trip.zielort,
@@ -63,11 +67,11 @@ const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
       coordinates: trip.coordinates,
       raw_details: trip.rawDetails,
       created_at: new Date().toISOString()
-    };
+    }));
 
     const { error } = await supabase
       .from('trips')
-      .upsert(dbTrip, { onConflict: 'id' });
+      .upsert(dbTrips, { onConflict: 'id' });
 
     if (error) {
       console.warn('Supabase sync error (table may not exist or schema mismatch):', error.message);
@@ -75,7 +79,7 @@ const uploadTripToSupabase = async (trip: SavedTrip): Promise<boolean> => {
     }
     return true;
   } catch (err) {
-    console.warn('Network or internal error uploading trip to Supabase:', err);
+    console.warn('Network or internal error uploading trips to Supabase:', err);
     return false;
   }
 };
@@ -140,7 +144,7 @@ export const saveTrip = async (trip: SavedTrip): Promise<SavedTrip> => {
   if (isSupabaseConfigured()) {
     const online = await isOnline();
     if (online) {
-      const success = await uploadTripToSupabase(updatedTrip);
+      const success = await uploadTripsToSupabase([updatedTrip]);
       if (success) {
         updatedTrip.synced = true;
         // Update synced flag in local storage
@@ -167,20 +171,18 @@ export const syncPendingTrips = async (): Promise<void> => {
 
   try {
     const trips = await getLocalTrips();
-    let hasChanges = false;
+    const unsyncedTrips = trips.filter(trip => !trip.synced);
 
-    for (const trip of trips) {
-      if (!trip.synced) {
-        const success = await uploadTripToSupabase(trip);
-        if (success) {
+    if (unsyncedTrips.length > 0) {
+      // ⚡ Bolt: Use batched network request
+      const success = await uploadTripsToSupabase(unsyncedTrips);
+      if (success) {
+        // Update synced flag for all successfully synced trips
+        unsyncedTrips.forEach(trip => {
           trip.synced = true;
-          hasChanges = true;
-        }
+        });
+        await saveLocalTrips(trips);
       }
-    }
-
-    if (hasChanges) {
-      await saveLocalTrips(trips);
     }
   } catch (err) {
     console.warn('Error during background pending trips sync:', err);
