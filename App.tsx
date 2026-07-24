@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -75,6 +75,26 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'scanner' | 'review'>('dashboard');
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [activeScannedData, setActiveScannedData] = useState<MTSFormData | null>(null);
+
+  // Memoize derived stats to prevent O(n) recalculations on every render (e.g. currentScreen changes)
+  // Expected Impact: Reduces stats calculation overhead by ~100% on non-trips state updates
+  const { abgerechnetCount, ocrAccuracy } = useMemo(() => {
+    let abgerechnet = 0;
+    let confidenceSum = 0;
+
+    for (const t of trips) {
+      if (t.status === 'Abgerechnet') {
+        abgerechnet++;
+      }
+      confidenceSum += t.confidence;
+    }
+
+    const accuracy = trips.length > 0
+      ? `${Math.round((confidenceSum / trips.length) * 100)}%`
+      : '0%';
+
+    return { abgerechnetCount: abgerechnet, ocrAccuracy: accuracy };
+  }, [trips]);
 
   // Load and sync trips from the databaseManager
   useEffect(() => {
@@ -205,13 +225,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {abgerechnetCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
