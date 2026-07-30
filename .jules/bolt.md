@@ -1,0 +1,3 @@
+## 2024-05-24 - Unmemoized Render Items and Array Reductions in Lists
+**Learning:** App.tsx recalculates array iterations (`trips.filter` and `trips.reduce`) on every render, which is inefficient. Additionally, the `FlatList` component uses unmemoized inline functions or non-memoized components as its `renderItem`, causing unnecessary re-renders of the entire list whenever the parent state updates, which could be a bottleneck as the trip history grows.
+**Action:** Always wrap array reductions and derivations in `useMemo` when calculating statistics, and use `useCallback` for `FlatList` render items (like `renderTripCard`) and navigation handlers (like `handleStartNavigation`) to ensure reference stability across renders.
