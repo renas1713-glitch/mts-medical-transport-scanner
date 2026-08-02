@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -19,6 +19,56 @@ import { openMapsWithAddress } from './utils/navigationHelper';
 import { getTrips, saveTrip, SavedTrip } from './utils/databaseManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// ⚡ Bolt: Memoized TripCard component to prevent unnecessary re-renders in FlatList
+const TripCard = React.memo(({ item, onStartNavigation }: { item: SavedTrip, onStartNavigation: (address: string) => void }) => (
+  <View style={styles.tripCard}>
+    <View style={styles.tripCardHeader}>
+      <View>
+        <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
+        <Text style={styles.tripCardDate}>{item.date}</Text>
+      </View>
+      <View style={[
+        styles.statusChip,
+        item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
+      ]}>
+        <Text style={[
+          styles.statusText,
+          item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
+        ]}>
+          {item.status}
+        </Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardDetails}>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Start:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
+      </View>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Ziel:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardActions}>
+      <TouchableOpacity
+        onPress={() => onStartNavigation(item.abholort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => onStartNavigation(item.zielort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+));
 
 const INITIAL_TRIPS: SavedTrip[] = [
   {
@@ -125,59 +175,28 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt: Memoized handleStartNavigation to maintain stable reference
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripCardHeader}>
-        <View>
-          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
-          <Text style={styles.tripCardDate}>{item.date}</Text>
-        </View>
-        <View style={[
-          styles.statusChip,
-          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
-        ]}>
-          <Text style={[
-            styles.statusText,
-            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
-          ]}>
-            {item.status}
-          </Text>
-        </View>
-      </View>
+  // ⚡ Bolt: Memoized render function for FlatList
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
+    <TripCard item={item} onStartNavigation={handleStartNavigation} />
+  ), [handleStartNavigation]);
 
-      <View style={styles.tripCardDetails}>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Start:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
-        </View>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Ziel:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
-        </View>
-      </View>
+  // ⚡ Bolt: Memoize stats calculations to prevent O(N) operations on every re-render
+  const stats = useMemo(() => {
+    const settledCount = trips.filter(t => t.status === 'Abgerechnet').length;
+    const accuracy = trips.length > 0
+      ? Math.round((trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length) * 100)
+      : 0;
 
-      <View style={styles.tripCardActions}>
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.abholort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.zielort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    return {
+      settledCount,
+      accuracyText: trips.length > 0 ? `${accuracy}%` : '0%'
+    };
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +224,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {stats.settledCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {stats.accuracyText}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
