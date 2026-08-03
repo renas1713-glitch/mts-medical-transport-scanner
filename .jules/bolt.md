@@ -1,0 +1,3 @@
+## 2025-03-03 - Memoize FlatList renderItem and derived stats
+**Learning:** In React Native, passing an inline arrow function or unmemoized function to `FlatList`'s `renderItem` prop causes all list items to re-render whenever the parent component (`App.tsx`) re-renders. Also, calculating derived stats (like mapping/filtering an array of trips) directly in JSX causes redundant O(N) operations on every render.
+**Action:** Always memoize `renderItem` functions using `useCallback` when passed to `FlatList`. Memoize derived state from arrays using `useMemo` to prevent redundant O(N) calculations.
