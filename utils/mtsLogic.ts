@@ -13,6 +13,17 @@ export interface OCRElement {
   height: number;
 }
 
+const replacementsMap = {
+  'KMSerkiinik': 'Kinderklinik',
+  'Neurop&atrie': 'Neuropädiatrie',
+  'Krankenbeirderung': 'Krankenbeförderung',
+};
+
+const compiledReplacements = Object.entries(replacementsMap).map(([typo, replacement]) => ({
+  regex: new RegExp(typo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi'),
+  replacement,
+}));
+
 /**
  * Standardizes common typos from OCR scans.
  */
@@ -20,18 +31,8 @@ export const correctTypos = (text: string): string => {
   if (!text) return '';
   let corrected = text;
   
-  // Define standard replacement map
-  const replacements: { [key: string]: string } = {
-    'KMSerkiinik': 'Kinderklinik',
-    'Neurop&atrie': 'Neuropädiatrie',
-    'Krankenbeirderung': 'Krankenbeförderung',
-  };
-
-  // Perform word-based or substring replacements
-  Object.keys(replacements).forEach((typo) => {
-    const replacement = replacements[typo];
-    // Case-insensitive replacement
-    const regex = new RegExp(typo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+  // Perform word-based or substring replacements using pre-compiled regexes
+  compiledReplacements.forEach(({ regex, replacement }) => {
     corrected = corrected.replace(regex, replacement);
   });
 
