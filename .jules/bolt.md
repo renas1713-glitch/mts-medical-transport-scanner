@@ -1,0 +1,3 @@
+## 2023-10-27 - [React Native FlatList Render Optimization]
+**Learning:** In React Native, defining `renderItem` inside a functional component without memoization causes all items in a `FlatList` to re-render whenever the parent component re-renders. This is particularly problematic for lists displaying complex UI or with many items, as it leads to performance degradation and dropped frames.
+**Action:** When using `FlatList`, always memoize the `renderItem` function using `useCallback`, ensuring that any dependencies (like action callbacks) are also memoized. Also apply `useCallback` to `keyExtractor`.

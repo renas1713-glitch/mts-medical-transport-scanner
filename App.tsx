@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,14 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt Optimization: Memoize navigation callback to prevent re-creating this function on every render
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt Optimization: Memoize render function to prevent unnecessary re-renders of FlatList items
+  // This is especially important for lists as re-creating the render function forces all items to re-render
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +179,10 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]); // Dependency array includes the memoized navigation callback
+
+  // ⚡ Bolt Optimization: Memoize key extractor
+  const keyExtractor = useCallback((item: SavedTrip) => item.id, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -233,7 +238,7 @@ export default function App() {
           ) : (
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               renderItem={renderTripCard}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
