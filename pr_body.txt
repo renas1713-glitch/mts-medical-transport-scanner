@@ -1,0 +1,7 @@
+💡 **What**: Extracted trip statistics calculation into a single `useMemo` block, consolidating `.filter` and `.reduce` operations into a single loop. Additionally, `renderTripCard` and `handleStartNavigation` have been wrapped in `useCallback`.
+
+🎯 **Why**: The `App` component was unnecessarily recalculating stats using multiple `O(N)` passes over the trips array during every render. Unmemoized callback functions also forced the `FlatList` to constantly re-render its children.
+
+📊 **Impact**: Prevents redundant `O(N)` loop executions on every render. `FlatList` children re-renders are reduced significantly. Overall UI performance remains crisp as the number of scanned items grows.
+
+🔬 **Measurement**: Inspect React DevTools Profiler to observe reduced component render times and the elimination of `renderTripCard` recreation.
