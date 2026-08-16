@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -130,7 +130,9 @@ export default function App() {
   };
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt: Wrapped renderTripCard in useCallback to prevent recreation on every render,
+  // reducing unnecessary FlatList child re-renders.
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +179,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
