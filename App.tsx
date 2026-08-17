@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -129,6 +129,25 @@ export default function App() {
     openMapsWithAddress(address);
   };
 
+  // Memoize stats calculations to prevent recalculation on every render
+  const stats = useMemo(() => {
+    if (trips.length === 0) return { settledCount: 0, ocrAccuracy: 0 };
+
+    let settledCount = 0;
+    let totalConfidence = 0;
+
+    for (const trip of trips) {
+      if (trip.status === 'Abgerechnet') {
+        settledCount++;
+      }
+      totalConfidence += trip.confidence;
+    }
+
+    const ocrAccuracy = Math.round((totalConfidence / trips.length) * 100);
+
+    return { settledCount, ocrAccuracy };
+  }, [trips]);
+
   // Render a single trip card on dashboard
   const renderTripCard = ({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
@@ -205,13 +224,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {stats.settledCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {stats.ocrAccuracy}%
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
