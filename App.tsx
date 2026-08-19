@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -75,6 +75,21 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'scanner' | 'review'>('dashboard');
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [activeScannedData, setActiveScannedData] = useState<MTSFormData | null>(null);
+
+  // Memoize the aggregate dashboard statistics to avoid recalculating on every render
+  const dashboardStats = useMemo(() => {
+    const totalTrips = trips.length;
+    const settledTrips = trips.filter(t => t.status === 'Abgerechnet').length;
+    const ocrAccuracy = totalTrips > 0
+      ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / totalTrips * 100)}%`
+      : '0%';
+
+    return {
+      totalTrips,
+      settledTrips,
+      ocrAccuracy,
+    };
+  }, [trips]);
 
   // Load and sync trips from the databaseManager
   useEffect(() => {
@@ -200,18 +215,18 @@ export default function App() {
           {/* Quick Stats banner */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>{trips.length}</Text>
+              <Text style={styles.statNum}>{dashboardStats.totalTrips}</Text>
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {dashboardStats.settledTrips}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {dashboardStats.ocrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
