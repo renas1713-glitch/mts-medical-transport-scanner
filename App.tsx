@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,16 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt: Optimize callback reference to prevent FlatList from re-rendering all items unnecessarily.
+  // Impact: Reduces full FlatList re-renders when parent state changes.
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt: Memoize renderItem to ensure stable references for FlatList, optimizing list scrolling performance.
+  // Impact: O(1) reference check instead of O(n) re-renders for list items on parent state update.
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +181,14 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // ⚡ Bolt: Memoize stats calculations to prevent expensive array filtering/reducing on every render.
+  // Impact: Prevents O(n) array iteration on re-renders unrelated to 'trips' changes.
+  const abgerechnetCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+  const ocrGenauigkeit = useMemo(() => {
+    return trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%';
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +216,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {abgerechnetCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrGenauigkeit}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
