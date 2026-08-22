@@ -60,7 +60,7 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
 
   // Breathe effect for scanning boundaries
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(guideOpacity, {
           toValue: 1.0,
@@ -73,13 +73,17 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    animation.start();
+
+    // Performance Optimization: Stop animation on unmount to prevent background execution and memory leaks
+    return () => animation.stop();
   }, [guideOpacity]);
 
   // Smooth laser animation loop (scans up and down viewport)
   useEffect(() => {
     if (isProcessing) {
-      Animated.loop(
+      const animation = Animated.loop(
         Animated.sequence([
           Animated.timing(scanLineAnim, {
             toValue: 1,
@@ -92,7 +96,11 @@ export const MTSCamera: React.FC<MTSCameraProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      animation.start();
+
+      // Performance Optimization: Stop animation on unmount or when processing stops to prevent background execution
+      return () => animation.stop();
     } else {
       scanLineAnim.setValue(0);
     }
