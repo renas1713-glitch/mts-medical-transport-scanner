@@ -13,27 +13,25 @@ export interface OCRElement {
   height: number;
 }
 
+const TYPO_REPLACEMENTS = [
+  { regex: new RegExp('KMSerkiinik'.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi'), replacement: 'Kinderklinik' },
+  { regex: new RegExp('Neurop&atrie'.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi'), replacement: 'Neuropädiatrie' },
+  { regex: new RegExp('Krankenbeirderung'.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi'), replacement: 'Krankenbeförderung' },
+];
+
 /**
  * Standardizes common typos from OCR scans.
+ * ⚡ Bolt Optimization: Uses pre-compiled RegExp to avoid re-compilation on every call.
+ * Reduces typo correction execution time.
  */
 export const correctTypos = (text: string): string => {
   if (!text) return '';
   let corrected = text;
   
-  // Define standard replacement map
-  const replacements: { [key: string]: string } = {
-    'KMSerkiinik': 'Kinderklinik',
-    'Neurop&atrie': 'Neuropädiatrie',
-    'Krankenbeirderung': 'Krankenbeförderung',
-  };
-
-  // Perform word-based or substring replacements
-  Object.keys(replacements).forEach((typo) => {
-    const replacement = replacements[typo];
-    // Case-insensitive replacement
-    const regex = new RegExp(typo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
-    corrected = corrected.replace(regex, replacement);
-  });
+  // Perform word-based or substring replacements using pre-compiled regex
+  for (let i = 0; i < TYPO_REPLACEMENTS.length; i++) {
+    corrected = corrected.replace(TYPO_REPLACEMENTS[i].regex, TYPO_REPLACEMENTS[i].replacement);
+  }
 
   return corrected;
 };
