@@ -20,6 +20,55 @@ import { getTrips, saveTrip, SavedTrip } from './utils/databaseManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const TripCard = React.memo(({ item, onNavigate }: { item: SavedTrip, onNavigate: (address: string) => void }) => (
+  <View style={styles.tripCard}>
+    <View style={styles.tripCardHeader}>
+      <View>
+        <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
+        <Text style={styles.tripCardDate}>{item.date}</Text>
+      </View>
+      <View style={[
+        styles.statusChip,
+        item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
+      ]}>
+        <Text style={[
+          styles.statusText,
+          item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
+        ]}>
+          {item.status}
+        </Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardDetails}>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Start:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
+      </View>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Ziel:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardActions}>
+      <TouchableOpacity
+        onPress={() => onNavigate(item.abholort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => onNavigate(item.zielort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+));
+
 const INITIAL_TRIPS: SavedTrip[] = [
   {
     id: 'trip-1',
@@ -96,6 +145,17 @@ export default function App() {
     initializeApp();
   }, []);
 
+  // Memoized stats
+  const settledTripsCount = React.useMemo(() => {
+    return trips.filter(t => t.status === 'Abgerechnet').length;
+  }, [trips]);
+
+  const averageConfidence = React.useMemo(() => {
+    if (trips.length === 0) return 0;
+    const sum = trips.reduce((acc, t) => acc + t.confidence, 0);
+    return Math.round((sum / trips.length) * 100);
+  }, [trips]);
+
   // Navigation callbacks
   const handleScanCompleted = (data: MTSFormData, imageUri: string) => {
     setActiveScannedData(data);
@@ -125,59 +185,14 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  const handleStartNavigation = React.useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripCardHeader}>
-        <View>
-          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
-          <Text style={styles.tripCardDate}>{item.date}</Text>
-        </View>
-        <View style={[
-          styles.statusChip,
-          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
-        ]}>
-          <Text style={[
-            styles.statusText,
-            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
-          ]}>
-            {item.status}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardDetails}>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Start:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
-        </View>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Ziel:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardActions}>
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.abholort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.zielort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  const renderTripCard = React.useCallback(({ item }: { item: SavedTrip }) => (
+    <TripCard item={item} onNavigate={handleStartNavigation} />
+  ), [handleStartNavigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +220,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {settledTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {trips.length > 0 ? `${averageConfidence}%` : '0%'}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
