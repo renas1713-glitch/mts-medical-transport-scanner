@@ -1,0 +1,4 @@
+💡 What: Wrapped the calculations for `settledTripsCount` and `ocrAccuracy` inside `App.tsx` with `useMemo`.
+🎯 Why: Previously, these statistics were derived via array operations (`filter` and `reduce`) that executed synchronously on every single render of the `App` component, even for unrelated state changes (like navigating screens).
+📊 Impact: Prevents expensive `O(N)` filtering and reducing computations on every render. CPU usage overhead decreases during screen transitions or frequent UI updates.
+🔬 Measurement: Verify rendering metrics and observe `App.tsx` re-renders; the array reduction/filtering is skipped unless the `trips` state mutates.
