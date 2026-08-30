@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -130,7 +130,10 @@ export default function App() {
   };
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt Optimization: Memoize renderItem function for FlatList using useCallback
+  // This prevents recreating the function on every render of App.tsx, which in turn
+  // reduces unnecessary re-renders of the trip card list items inside the FlatList.
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +180,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
