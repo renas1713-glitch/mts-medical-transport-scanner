@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -76,6 +76,22 @@ export default function App() {
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [activeScannedData, setActiveScannedData] = useState<MTSFormData | null>(null);
 
+  // ⚡ Bolt: Consolidated stats calculation into a single-pass O(N) loop
+  const stats = useMemo(() => {
+    let settledCount = 0;
+    let totalConfidence = 0;
+
+    for (let i = 0; i < trips.length; i++) {
+      if (trips[i].status === 'Abgerechnet') settledCount++;
+      totalConfidence += trips[i].confidence;
+    }
+
+    return {
+      settledCount,
+      accuracy: trips.length > 0 ? Math.round((totalConfidence / trips.length) * 100) : 0
+    };
+  }, [trips]);
+
   // Load and sync trips from the databaseManager
   useEffect(() => {
     const initializeApp = async () => {
@@ -130,54 +146,11 @@ export default function App() {
   };
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripCardHeader}>
-        <View>
-          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
-          <Text style={styles.tripCardDate}>{item.date}</Text>
-        </View>
-        <View style={[
-          styles.statusChip,
-          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
-        ]}>
-          <Text style={[
-            styles.statusText,
-            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
-          ]}>
-            {item.status}
-          </Text>
-        </View>
-      </View>
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
+    <TripCardItem item={item} onStartNavigation={handleStartNavigation} />
+  ), [handleStartNavigation]);
 
-      <View style={styles.tripCardDetails}>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Start:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
-        </View>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Ziel:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardActions}>
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.abholort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.zielort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  const keyExtractor = useCallback((item: SavedTrip) => item.id, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -204,15 +177,11 @@ export default function App() {
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
-              </Text>
+              <Text style={styles.statNum}>{stats.settledCount}</Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
-              </Text>
+              <Text style={styles.statNum}>{stats.accuracy}%</Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
           </View>
@@ -233,7 +202,7 @@ export default function App() {
           ) : (
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               renderItem={renderTripCard}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
@@ -269,6 +238,55 @@ export default function App() {
     </SafeAreaView>
   );
 }
+
+const TripCardItem = React.memo(({ item, onStartNavigation }: { item: SavedTrip, onStartNavigation: (address: string) => void }) => (
+  <View style={styles.tripCard}>
+    <View style={styles.tripCardHeader}>
+      <View>
+        <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
+        <Text style={styles.tripCardDate}>{item.date}</Text>
+      </View>
+      <View style={[
+        styles.statusChip,
+        item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
+      ]}>
+        <Text style={[
+          styles.statusText,
+          item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
+        ]}>
+          {item.status}
+        </Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardDetails}>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Start:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
+      </View>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Ziel:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardActions}>
+      <TouchableOpacity
+        onPress={() => onStartNavigation(item.abholort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => onStartNavigation(item.zielort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+));
 
 const styles = StyleSheet.create({
   safeArea: {

@@ -1,0 +1,3 @@
+## 2024-05-24 - React Native FlatList & Dashboard Optimizations
+**Learning:** In React Native, passing inline functions to `FlatList`'s `renderItem` or computing list statistics (`filter`/`reduce`) directly in the render method forces unneeded allocations and O(N) work on every re-render. When building dashboard views, inline list items cause expensive tearing-down and rebuilding of Views.
+**Action:** Always extract list items into a separate `React.memo` component, wrap `renderItem` and `keyExtractor` in `useCallback`, and consolidate multi-pass array operations (`filter` + `reduce`) into a single-pass `useMemo` loop.
