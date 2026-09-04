@@ -14,26 +14,27 @@ export interface OCRElement {
 }
 
 /**
+ * Pre-compiled regexes for common typo replacements to avoid overhead during OCR parsing.
+ */
+const TYPO_REPLACEMENTS = Object.entries({
+  'KMSerkiinik': 'Kinderklinik',
+  'Neurop&atrie': 'Neuropädiatrie',
+  'Krankenbeirderung': 'Krankenbeförderung',
+}).map(([typo, replacement]) => ({
+  regex: new RegExp(typo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi'),
+  replacement,
+}));
+
+/**
  * Standardizes common typos from OCR scans.
  */
 export const correctTypos = (text: string): string => {
   if (!text) return '';
   let corrected = text;
   
-  // Define standard replacement map
-  const replacements: { [key: string]: string } = {
-    'KMSerkiinik': 'Kinderklinik',
-    'Neurop&atrie': 'Neuropädiatrie',
-    'Krankenbeirderung': 'Krankenbeförderung',
-  };
-
-  // Perform word-based or substring replacements
-  Object.keys(replacements).forEach((typo) => {
-    const replacement = replacements[typo];
-    // Case-insensitive replacement
-    const regex = new RegExp(typo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
-    corrected = corrected.replace(regex, replacement);
-  });
+  for (let i = 0; i < TYPO_REPLACEMENTS.length; i++) {
+    corrected = corrected.replace(TYPO_REPLACEMENTS[i].regex, TYPO_REPLACEMENTS[i].replacement);
+  }
 
   return corrected;
 };
@@ -59,10 +60,25 @@ export const parseBoundingBoxText = (
   elements: OCRElement[],
   targetBox: { xMin: number; xMax: number; yMin: number; yMax: number }
 ): string => {
-  const filtered = elements.filter(elem => isInsideBox(elem, targetBox));
+  const filtered: OCRElement[] = [];
+
+  // Inline bounds checking for performance to avoid function call overhead
+  for (let i = 0; i < elements.length; i++) {
+    const elem = elements[i];
+    const centerX = elem.x + elem.width / 2;
+    const centerY = elem.y + elem.height / 2;
+    if (
+      centerX >= targetBox.xMin &&
+      centerX <= targetBox.xMax &&
+      centerY >= targetBox.yMin &&
+      centerY <= targetBox.yMax
+    ) {
+      filtered.push(elem);
+    }
+  }
   
   // Sort elements: top to bottom, then left to right
-  const sorted = [...filtered].sort((a, b) => {
+  filtered.sort((a, b) => {
     // If elements are on similar vertical level (within 10px), sort left to right
     if (Math.abs(a.y - b.y) < 10) {
       return a.x - b.x;
@@ -70,7 +86,12 @@ export const parseBoundingBoxText = (
     return a.y - b.y;
   });
 
-  return sorted.map(elem => elem.text.trim()).join(' ');
+  // Replaces .map().join() with a fast loop
+  let result = '';
+  for (let i = 0; i < filtered.length; i++) {
+    result += (i > 0 ? ' ' : '') + filtered[i].text.trim();
+  }
+  return result;
 };
 
 /**
