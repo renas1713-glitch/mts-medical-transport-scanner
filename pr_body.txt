@@ -1,0 +1,4 @@
+💡 What: Added `useMemo` to cache the results of the `trips.filter` and `trips.reduce` operations for dashboard statistics, and wrapped `renderTripCard` in `useCallback`.
+🎯 Why: To prevent O(N) array operations (filter and reduce) from running on every single render of the `App` component, and to provide a stable reference for the `FlatList` render item, reducing unnecessary re-renders of list items.
+📊 Impact: Reduces unnecessary recalculations on re-renders, lowering CPU usage, and optimizes `FlatList` performance by preventing unnecessary list item re-renders.
+🔬 Measurement: Verify by checking the application's performance during navigation and dashboard updates, ensuring no lag occurs and the list remains responsive.
