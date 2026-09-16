@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -76,6 +76,11 @@ export default function App() {
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [activeScannedData, setActiveScannedData] = useState<MTSFormData | null>(null);
 
+  // PERFORMANCE OPTIMIZATION: Memoized derived stats calculations to avoid O(N) array filtering
+  // and reducing on every render cycle. This prevents CPU spikes when the dashboard re-renders.
+  const settledTripsCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+  const ocrAccuracy = useMemo(() => trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%', [trips]);
+
   // Load and sync trips from the databaseManager
   useEffect(() => {
     const initializeApp = async () => {
@@ -125,12 +130,15 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // PERFORMANCE OPTIMIZATION: Memoized handleStartNavigation so it doesn't get recreated on every render.
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
+  // PERFORMANCE OPTIMIZATION: Memoized renderTripCard to prevent unnecessary re-renders of FlatList items.
+  // This avoids recalculating the view hierarchy for list items that haven't changed.
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +185,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +213,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {settledTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
