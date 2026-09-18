@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -97,12 +97,14 @@ export default function App() {
   }, []);
 
   // Navigation callbacks
-  const handleScanCompleted = (data: MTSFormData, imageUri: string) => {
+  // ⚡ Optimization: Memoize callback to prevent re-creation on every render
+  const handleScanCompleted = useCallback((data: MTSFormData, imageUri: string) => {
     setActiveScannedData(data);
     setCurrentScreen('review');
-  };
+  }, []);
 
-  const handleReviewSaved = (savedTrip: SavedTrip) => {
+  // ⚡ Optimization: Memoize callback to prevent re-creation on every render
+  const handleReviewSaved = useCallback((savedTrip: SavedTrip) => {
     setTrips(prev => {
       const idx = prev.findIndex(t => t.id === savedTrip.id);
       if (idx >= 0) {
@@ -114,23 +116,27 @@ export default function App() {
     });
     setActiveScannedData(null);
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleCancelScanner = () => {
+  // ⚡ Optimization: Memoize callback to prevent re-creation on every render
+  const handleCancelScanner = useCallback(() => {
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleCancelReview = () => {
+  // ⚡ Optimization: Memoize callback to prevent re-creation on every render
+  const handleCancelReview = useCallback(() => {
     setActiveScannedData(null);
     setCurrentScreen('dashboard');
-  };
+  }, []);
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Optimization: Memoize callback to prevent re-creation on every render
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Optimization: Memoize renderItem function to prevent FlatList from receiving a new prop on every render and re-rendering all items
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +183,11 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // ⚡ Optimization: Memoize expensive O(n) array operations for dashboard stats to only run when 'trips' changes
+  const settledTripsCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+  const ocrAccuracy = useMemo(() => trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%', [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +215,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {settledTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
