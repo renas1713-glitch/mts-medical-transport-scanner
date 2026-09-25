@@ -1,0 +1,3 @@
+## 2024-11-20 - FlatList renderItem Memoization
+**Learning:** React/React Native `FlatList` benefits significantly from memoizing its `renderItem` function. Failing to do so causes re-creation of the item rendering function upon any parent component re-render (like setting state `activeScannedData`), which cascades to list re-renders. Also, inner dependency functions passed must be memoized too. Also must include code comments.
+**Action:** Always wrap `FlatList` `renderItem` handlers (and their dependencies) with `useCallback` to preserve referential equality across parent renders. Ensure to leave inline explanatory comments for performance optimizations.
