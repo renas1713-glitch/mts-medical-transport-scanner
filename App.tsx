@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,19 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt: Memoized handleStartNavigation to maintain stable reference
+  // 🎯 Expected Impact: Prevents recreation of this function on every App render,
+  // ensuring the downstream `renderTripCard` also keeps a stable reference.
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt: Wrapped in useCallback to prevent unnecessary FlatList item re-renders.
+  // 🎯 Expected Impact: Without this, `renderTripCard` recreates on every `App` re-render
+  // (like when changing tabs). By memoizing it, `FlatList` skips re-rendering untouched items,
+  // resulting in smoother scrolling and less CPU usage on large lists.
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +184,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
