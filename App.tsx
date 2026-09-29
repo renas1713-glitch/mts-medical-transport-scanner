@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,14 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // Memoize navigation handler to prevent recreation on every render
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // Memoize render item for FlatList performance
+  // Includes handleStartNavigation in dependencies per exhaustive-deps rule
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +179,21 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // Memoize keyExtractor for FlatList
+  const keyExtractor = useCallback((item: SavedTrip) => item.id, []);
+
+  // Memoize derived stats to prevent recalculation on unrelated state changes
+  const submittedTripsCount = useMemo(() =>
+    trips.filter(t => t.status === 'Abgerechnet').length,
+  [trips]);
+
+  const ocrAccuracy = useMemo(() =>
+    trips.length > 0
+      ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%`
+      : '0%',
+  [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +221,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {submittedTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {ocrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
@@ -233,7 +249,7 @@ export default function App() {
           ) : (
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               renderItem={renderTripCard}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
