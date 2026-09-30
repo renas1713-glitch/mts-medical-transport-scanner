@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -71,7 +71,60 @@ const INITIAL_TRIPS: SavedTrip[] = [
   }
 ];
 
+
+// ⚡ Bolt Optimization: Extracted TripCard into React.memo to prevent unnecessary re-renders of the FlatList items during state changes.
+// Impact: Reduces render cycles, improving scroll performance for large lists.
+const TripCardItem = React.memo(({ item, onNavigate }: { item: SavedTrip; onNavigate: (address: string) => void }) => (
+    <View style={styles.tripCard}>
+      <View style={styles.tripCardHeader}>
+        <View>
+          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
+          <Text style={styles.tripCardDate}>{item.date}</Text>
+        </View>
+        <View style={[
+          styles.statusChip,
+          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
+        ]}>
+          <Text style={[
+            styles.statusText,
+            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
+          ]}>
+            {item.status}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.tripCardDetails}>
+        <View style={styles.addressRow}>
+          <Text style={styles.addressLabel}>Start:</Text>
+          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
+        </View>
+        <View style={styles.addressRow}>
+          <Text style={styles.addressLabel}>Ziel:</Text>
+          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
+        </View>
+      </View>
+
+      <View style={styles.tripCardActions}>
+        <TouchableOpacity
+          onPress={() => onNavigate(item.abholort)}
+          style={styles.cardActionBtn}
+        >
+          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => onNavigate(item.zielort)}
+          style={styles.cardActionBtn}
+        >
+          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+));
+
 export default function App() {
+
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'scanner' | 'review'>('dashboard');
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [activeScannedData, setActiveScannedData] = useState<MTSFormData | null>(null);
@@ -125,59 +178,14 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripCardHeader}>
-        <View>
-          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
-          <Text style={styles.tripCardDate}>{item.date}</Text>
-        </View>
-        <View style={[
-          styles.statusChip,
-          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
-        ]}>
-          <Text style={[
-            styles.statusText,
-            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
-          ]}>
-            {item.status}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardDetails}>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Start:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
-        </View>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Ziel:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardActions}>
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.abholort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.zielort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
+    <TripCardItem item={item} onNavigate={handleStartNavigation} />
+  ), [handleStartNavigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
