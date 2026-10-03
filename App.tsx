@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,15 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt: Memoized navigation handler to prevent recreating function on every render
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt: Memoized renderItem to prevent recreating the function on every render,
+  // reducing unnecessary item re-renders in the FlatList.
+  // Performance impact: Reduces main thread workload during dashboard updates.
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +180,18 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // ⚡ Bolt: Memoized key extractor for FlatList
+  const keyExtractor = useCallback((item: SavedTrip) => item.id, []);
+
+  // ⚡ Bolt: Memoized derived stats to prevent O(N) recalculations on every render
+  // Performance impact: Avoids running array reductions when unrelated state changes.
+  const settledTripsCount = useMemo(() => trips.filter(t => t.status === 'Abgerechnet').length, [trips]);
+  const averageOcrAccuracy = useMemo(() => {
+    if (trips.length === 0) return '0%';
+    return `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%`;
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,13 +219,13 @@ export default function App() {
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {settledTripsCount}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {averageOcrAccuracy}
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
@@ -233,7 +247,7 @@ export default function App() {
           ) : (
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               renderItem={renderTripCard}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
