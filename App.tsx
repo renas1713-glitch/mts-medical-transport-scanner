@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,12 +125,13 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
   // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
+  // ⚡ Bolt: Memoized renderItem to prevent FlatList re-renders on parent state changes
+  const renderTripCard = useCallback(({ item }: { item: SavedTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripCardHeader}>
         <View>
@@ -177,7 +178,17 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleStartNavigation]);
+
+  // ⚡ Bolt: Memoize O(N) array calculations to avoid overhead on every render
+  const dashboardStats = useMemo(() => {
+    const total = trips.length;
+    const settled = trips.filter(t => t.status === 'Abgerechnet').length;
+    const avgConfidence = total > 0
+      ? Math.round((trips.reduce((acc, t) => acc + t.confidence, 0) / total) * 100)
+      : 0;
+    return { total, settled, avgConfidence };
+  }, [trips]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -200,18 +211,18 @@ export default function App() {
           {/* Quick Stats banner */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNum}>{trips.length}</Text>
+              <Text style={styles.statNum}>{dashboardStats.total}</Text>
               <Text style={styles.statLabel}>Gesamtbelege</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.filter(t => t.status === 'Abgerechnet').length}
+                {dashboardStats.settled}
               </Text>
               <Text style={styles.statLabel}>Übermittelt</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>
-                {trips.length > 0 ? `${Math.round(trips.reduce((acc, t) => acc + t.confidence, 0) / trips.length * 100)}%` : '0%'}
+                {dashboardStats.avgConfidence}%
               </Text>
               <Text style={styles.statLabel}>OCR Genauigkeit</Text>
             </View>
