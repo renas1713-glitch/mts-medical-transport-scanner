@@ -1,0 +1,5 @@
+## 2023-10-25 - Extracted and memoized FlatList renderItem component in React Native
+
+**Learning:** In a React Native Expo application, when creating a list of complex components, keeping the item rendering logic (`renderItem` for `FlatList` or an inline mapped component) inside the parent functional component causes those components to be recreated dynamically every single time the parent component's state changes. This is extremely inefficient and degrades UI rendering performance and causes scroll issues.
+
+**Action:** Always extract complex components rendered inside a `FlatList` or `map` *outside* of the parent functional component. Wrap the extracted component in `React.memo`, and make sure any callback props (e.g. `onPress` handlers) passed from the parent are memoized using `useCallback` (e.g., wrap the handler in the parent inside `useCallback` with an appropriate dependency array, and then wrap the `renderItem` function itself in a `useCallback` that depends on that memoized handler).
