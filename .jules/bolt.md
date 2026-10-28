@@ -1,0 +1,3 @@
+## 2024-10-28 - React Native FlatList renderItem Memoization Anti-pattern
+**Learning:** Defining the `renderItem` component inline within a parent functional component causes it to be recreated on every render of the parent. This destroys React's ability to memoize the list items, leading to terrible performance for long lists as the entire list re-renders.
+**Action:** Always extract the component used in `renderItem` to be defined *outside* of the parent component, and wrap it in `React.memo`. When passing callbacks to it, ensure they are wrapped in `useCallback` in the parent and passed down.
