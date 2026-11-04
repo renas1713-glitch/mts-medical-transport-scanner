@@ -1,0 +1,3 @@
+## 2024-05-15 - React Native List Optimization
+**Learning:** Found an inline `renderItem` component (`renderTripCard`) inside `App.tsx` that relies on the outer scope (`handleStartNavigation`). This causes unneeded re-renders in `FlatList`. React Native `FlatList` benefits significantly from memoized render functions (`useCallback`) and memoized list item components (`React.memo`) to avoid performance bottlenecks.
+**Action:** Extract the `TripCard` component outside `App` and wrap it in `React.memo`, pass `handleStartNavigation` as a prop (which is wrapped in `useCallback`). This avoids recreating the render function and component on every update of `App` state.
