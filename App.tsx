@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -71,6 +71,58 @@ const INITIAL_TRIPS: SavedTrip[] = [
   }
 ];
 
+
+// ⚡ Bolt: Extracted and memoized TripCard component to prevent unnecessary re-renders of the list items
+// Expected Impact: Reduces re-renders of individual trip cards when the main App component updates, improving FlatList scrolling and rendering performance.
+const TripCard = React.memo(({ item, onStartNavigation }: { item: SavedTrip, onStartNavigation: (address: string) => void }) => (
+  <View style={styles.tripCard}>
+    <View style={styles.tripCardHeader}>
+      <View>
+        <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
+        <Text style={styles.tripCardDate}>{item.date}</Text>
+      </View>
+      <View style={[
+        styles.statusChip,
+        item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
+      ]}>
+        <Text style={[
+          styles.statusText,
+          item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
+        ]}>
+          {item.status}
+        </Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardDetails}>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Start:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
+      </View>
+      <View style={styles.addressRow}>
+        <Text style={styles.addressLabel}>Ziel:</Text>
+        <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
+      </View>
+    </View>
+
+    <View style={styles.tripCardActions}>
+      <TouchableOpacity
+        onPress={() => onStartNavigation(item.abholort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => onStartNavigation(item.zielort)}
+        style={styles.cardActionBtn}
+      >
+        <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+));
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'scanner' | 'review'>('dashboard');
   const [trips, setTrips] = useState<SavedTrip[]>([]);
@@ -125,59 +177,15 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleStartNavigation = (address: string) => {
+  // ⚡ Bolt: Memoized callback to prevent passing new function references to child components
+  const handleStartNavigation = useCallback((address: string) => {
     openMapsWithAddress(address);
-  };
+  }, []);
 
-  // Render a single trip card on dashboard
-  const renderTripCard = ({ item }: { item: SavedTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripCardHeader}>
-        <View>
-          <Text style={styles.tripCardTitle}>{item.fahrtart}</Text>
-          <Text style={styles.tripCardDate}>{item.date}</Text>
-        </View>
-        <View style={[
-          styles.statusChip,
-          item.status === 'Abgerechnet' ? styles.statusChipSettled : styles.statusChipPending
-        ]}>
-          <Text style={[
-            styles.statusText,
-            item.status === 'Abgerechnet' ? styles.statusTextSettled : styles.statusTextPending
-          ]}>
-            {item.status}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardDetails}>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Start:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.abholort}</Text>
-        </View>
-        <View style={styles.addressRow}>
-          <Text style={styles.addressLabel}>Ziel:</Text>
-          <Text style={styles.addressValue} numberOfLines={2}>{item.zielort}</Text>
-        </View>
-      </View>
-
-      <View style={styles.tripCardActions}>
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.abholort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>📍 Start-Navi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => handleStartNavigation(item.zielort)}
-          style={styles.cardActionBtn}
-        >
-          <Text style={styles.cardActionBtnText}>🏁 Ziel-Navi</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  // ⚡ Bolt: Memoized renderItem function to prevent recreating it on every App render
+  const renderItem = useCallback(({ item }: { item: SavedTrip }) => (
+    <TripCard item={item} onStartNavigation={handleStartNavigation} />
+  ), [handleStartNavigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -234,7 +242,7 @@ export default function App() {
             <FlatList
               data={trips}
               keyExtractor={(item) => item.id}
-              renderItem={renderTripCard}
+              renderItem={renderItem}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
             />
